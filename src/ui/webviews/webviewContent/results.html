@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+    <title>Query Results</title>
+    <style>
+        :root {
+            --cell-padding: 8px 12px;
+            --border-color: var(--vscode-panel-border);
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .toolbar {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--vscode-editor-background);
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stats {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .stats-item {
+            margin-right: 16px;
+        }
+
+        .stats-value {
+            font-weight: 600;
+            color: var(--vscode-foreground);
+        }
+
+        button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 12px;
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        button:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        button.primary {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        button.primary:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+            background: var(--vscode-editor-background);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--vscode-foreground);
+            font-size: 13px;
+            opacity: 0.7;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            opacity: 1;
+        }
+
+        .tab.active {
+            opacity: 1;
+            border-bottom-color: var(--vscode-focusBorder);
+        }
+
+        .tab.error {
+            color: var(--vscode-errorForeground);
+        }
+
+        .content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .result-set {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .result-set.active {
+            display: flex;
+        }
+
+        .table-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            background: var(--vscode-editor-background);
+            z-index: 10;
+        }
+
+        th {
+            padding: var(--cell-padding);
+            text-align: left;
+            border-bottom: 2px solid var(--border-color);
+            font-weight: 600;
+            white-space: nowrap;
+            background: var(--vscode-editor-background);
+        }
+
+        th:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        td {
+            padding: var(--cell-padding);
+            border-bottom: 1px solid var(--border-color);
+            max-width: 400px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tr:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        .null-value {
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        .error-message {
+            padding: 20px;
+            color: var(--vscode-errorForeground);
+            background: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+            margin: 16px;
+            border-radius: 4px;
+        }
+
+        .error-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .success-message {
+            padding: 20px;
+            color: var(--vscode-foreground);
+            margin: 16px;
+        }
+
+        .success-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--vscode-testing-iconPassed);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--vscode-descriptionForeground);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="stats" id="stats"></div>
+            </div>
+            <div class="toolbar-right">
+                <button id="export-btn" title="Export results (coming in Phase 6)">Export</button>
+                <button id="refresh-btn" class="primary" title="Re-run query">Refresh</button>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabs"></div>
+
+        <div class="content" id="content">
+            <div class="empty-state">
+                <div class="empty-state-icon">📊</div>
+                <div>No results to display</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+        let currentResults = [];
+        let currentTab = 0;
+
+        // Handle messages from extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+
+            switch (message.command) {
+                case 'showResults':
+                    showResults(message.results);
+                    break;
+            }
+        });
+
+        function showResults(results) {
+            currentResults = results;
+            currentTab = 0;
+
+            renderTabs();
+            renderContent();
+            updateStats();
+        }
+
+        function renderTabs() {
+            const tabsContainer = document.getElementById('tabs');
+            tabsContainer.innerHTML = '';
+
+            if (currentResults.length === 0) {
+                return;
+            }
+
+            currentResults.forEach((result, index) => {
+                const tab = document.createElement('button');
+                tab.className = 'tab';
+                if (index === currentTab) {
+                    tab.classList.add('active');
+                }
+                if (result.error) {
+                    tab.classList.add('error');
+                }
+
+                // Tab label
+                if (result.error) {
+                    tab.textContent = `Query ${index + 1} (Error)`;
+                } else if (result.result && result.result.affectedRows !== undefined) {
+                    tab.textContent = `Query ${index + 1} (${result.result.affectedRows} rows affected)`;
+                } else if (result.result) {
+                    tab.textContent = `Query ${index + 1} (${result.result.rowCount} rows)`;
+                } else {
+                    tab.textContent = `Query ${index + 1}`;
+                }
+
+                tab.addEventListener('click', () => {
+                    currentTab = index;
+                    renderTabs();
+                    renderContent();
+                    updateStats();
+                });
+
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        function renderContent() {
+            const contentContainer = document.getElementById('content');
+            contentContainer.innerHTML = '';
+
+            if (currentResults.length === 0) {
+                contentContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div>No results to display</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const result = currentResults[currentTab];
+
+            if (result.error) {
+                contentContainer.innerHTML = `
+                    <div class="error-message">
+                        <div class="error-title">Query Error</div>
+                        <pre>${escapeHtml(result.error)}</pre>
+                    </div>
+                `;
+                return;
+            }
+
+            if (!result.result) {
+                contentContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <div>No data</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Check if this is a non-SELECT query (INSERT, UPDATE, DELETE)
+            if (result.result.affectedRows !== undefined && result.result.rows.length === 0) {
+                contentContainer.innerHTML = `
+                    <div class="success-message">
+                        <div class="success-title">✓ Query executed successfully</div>
+                        <div>${result.result.affectedRows} row(s) affected</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render data table
+            const resultSet = document.createElement('div');
+            resultSet.className = 'result-set active';
+
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'table-container';
+
+            const table = createTable(result.result);
+            tableContainer.appendChild(table);
+            resultSet.appendChild(tableContainer);
+
+            contentContainer.appendChild(resultSet);
+        }
+
+        function createTable(queryResult) {
+            const table = document.createElement('table');
+
+            // Create header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+
+            queryResult.fields.forEach(field => {
+                const th = document.createElement('th');
+                th.textContent = field.name;
+                th.title = `${field.name} (${field.type || 'unknown'})`;
+                headerRow.appendChild(th);
+            });
+
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            // Create body
+            const tbody = document.createElement('tbody');
+
+            queryResult.rows.forEach(row => {
+                const tr = document.createElement('tr');
+
+                queryResult.fields.forEach(field => {
+                    const td = document.createElement('td');
+                    const value = row[field.name];
+
+                    if (value === null) {
+                        td.className = 'null-value';
+                        td.textContent = 'NULL';
+                    } else if (typeof value === 'object') {
+                        td.textContent = JSON.stringify(value);
+                    } else {
+                        td.textContent = value;
+                    }
+
+                    td.title = td.textContent; // Show full value on hover
+                    tr.appendChild(td);
+                });
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(tbody);
+            return table;
+        }
+
+        function updateStats() {
+            const statsContainer = document.getElementById('stats');
+
+            if (currentResults.length === 0) {
+                statsContainer.innerHTML = '';
+                return;
+            }
+
+            const result = currentResults[currentTab];
+            let statsHtml = '';
+
+            if (result.result && !result.error) {
+                if (result.result.affectedRows !== undefined) {
+                    statsHtml += `<span class="stats-item">Affected: <span class="stats-value">${result.result.affectedRows}</span></span>`;
+                } else {
+                    statsHtml += `<span class="stats-item">Rows: <span class="stats-value">${result.result.rowCount}</span></span>`;
+                }
+            }
+
+            statsHtml += `<span class="stats-item">Time: <span class="stats-value">${result.executionTime}ms</span></span>`;
+
+            statsContainer.innerHTML = statsHtml;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Button handlers
+        document.getElementById('export-btn').addEventListener('click', () => {
+            vscode.postMessage({ command: 'export' });
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            vscode.postMessage({ command: 'refresh' });
+        });
+
+        // Request initial data
+        vscode.postMessage({ command: 'ready' });
+    </script>
+</body>
+</html>

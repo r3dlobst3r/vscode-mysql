@@ -1,0 +1,329 @@
+{
+  "name": "vscode-mysql",
+  "displayName": "MySQL",
+  "description": "MySQL database management for Visual Studio Code",
+  "version": "1.0.0",
+  "publisher": "r3dlobst3r",
+  "icon": "media/extension-icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/r3dlobst3r/vscode-mysql"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "mysql",
+    "database",
+    "sql",
+    "azure"
+  ],
+  "activationEvents": [
+    "onCommand:mysql.connect",
+    "onView:mysqlConnections",
+    "onLanguage:sql"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mysql-explorer",
+          "title": "MySQL",
+          "icon": "media/mysql-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "mysql-explorer": [
+        {
+          "id": "mysqlConnections",
+          "name": "Connections"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mysql.connect",
+        "title": "MySQL: New Connection",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mysql.disconnect",
+        "title": "MySQL: Disconnect"
+      },
+      {
+        "command": "mysql.editConnection",
+        "title": "MySQL: Edit Connection"
+      },
+      {
+        "command": "mysql.deleteConnection",
+        "title": "MySQL: Delete Connection"
+      },
+      {
+        "command": "mysql.refreshConnection",
+        "title": "MySQL: Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "mysql.executeQuery",
+        "title": "MySQL: Execute Query",
+        "icon": "$(play)"
+      },
+      {
+        "command": "mysql.newQuery",
+        "title": "MySQL: New Query"
+      },
+      {
+        "command": "mysql.createDatabase",
+        "title": "MySQL: Create Database",
+        "icon": "$(database)"
+      },
+      {
+        "command": "mysql.dropDatabase",
+        "title": "MySQL: Drop Database"
+      },
+      {
+        "command": "mysql.exportResults",
+        "title": "MySQL: Export Results"
+      },
+      {
+        "command": "mysql.deployAzure",
+        "title": "MySQL: Deploy to Azure"
+      },
+      {
+        "command": "mysql.selectTop1000",
+        "title": "MySQL: Select Top 1000 Rows"
+      },
+      {
+        "command": "mysql.viewTableStructure",
+        "title": "MySQL: View Table Structure"
+      },
+      {
+        "command": "mysql.scriptAsCreate",
+        "title": "MySQL: Script as CREATE"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "mysql.executeQuery",
+        "key": "ctrl+shift+e",
+        "mac": "cmd+shift+e",
+        "when": "editorLangId == sql"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "mysql.connect",
+          "when": "view == mysqlConnections",
+          "group": "navigation"
+        },
+        {
+          "command": "mysql.refreshConnection",
+          "when": "view == mysqlConnections",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "mysql.connect",
+          "when": "view == mysqlConnections && viewItem == connection-disconnected",
+          "group": "inline"
+        },
+        {
+          "command": "mysql.disconnect",
+          "when": "view == mysqlConnections && viewItem == connection-connected"
+        },
+        {
+          "command": "mysql.editConnection",
+          "when": "view == mysqlConnections && viewItem =~ /^connection-/"
+        },
+        {
+          "command": "mysql.deleteConnection",
+          "when": "view == mysqlConnections && viewItem =~ /^connection-/"
+        },
+        {
+          "command": "mysql.newQuery",
+          "when": "view == mysqlConnections && viewItem =~ /^(connection-connected|server|database)$/"
+        },
+        {
+          "command": "mysql.createDatabase",
+          "when": "view == mysqlConnections && viewItem =~ /^(connection-connected|server)$/",
+          "group": "inline"
+        },
+        {
+          "command": "mysql.dropDatabase",
+          "when": "view == mysqlConnections && viewItem == database"
+        },
+        {
+          "command": "mysql.refreshConnection",
+          "when": "view == mysqlConnections && viewItem =~ /^(connection-|server|database)/",
+          "group": "inline"
+        },
+        {
+          "command": "mysql.selectTop1000",
+          "when": "view == mysqlConnections && viewItem == table"
+        },
+        {
+          "command": "mysql.viewTableStructure",
+          "when": "view == mysqlConnections && viewItem == table"
+        },
+        {
+          "command": "mysql.scriptAsCreate",
+          "when": "view == mysqlConnections && viewItem =~ /^(table|view)$/"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "mysql.executeQuery",
+          "when": "editorLangId == sql",
+          "group": "navigation"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "sql",
+        "extensions": [
+          ".sql"
+        ],
+        "aliases": [
+          "SQL"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "injectTo": [
+          "source.sql"
+        ],
+        "scopeName": "source.mysql-injection.sql",
+        "path": "./syntaxes/mysql.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "sql",
+        "path": "./snippets/mysql.json"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "MySQL",
+      "properties": {
+        "mysql.connections": {
+          "type": "array",
+          "default": [],
+          "description": "Saved MySQL connections",
+          "items": {
+            "type": "object"
+          }
+        },
+        "mysql.defaultConnection": {
+          "type": "string",
+          "default": "",
+          "description": "Default connection ID to use when executing queries"
+        },
+        "mysql.maxQueryResults": {
+          "type": "number",
+          "default": 1000,
+          "description": "Maximum number of rows to return from a query"
+        },
+        "mysql.queryTimeout": {
+          "type": "number",
+          "default": 30,
+          "description": "Query timeout in seconds"
+        },
+        "mysql.showQueryExecutionTime": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show query execution time in results"
+        },
+        "mysql.exportDefaultPath": {
+          "type": "string",
+          "default": "",
+          "description": "Default path for exports"
+        },
+        "mysql.format.keywordCase": {
+          "type": "string",
+          "description": "Keyword casing for SQL formatting",
+          "default": "upper",
+          "enum": [
+            "upper",
+            "lower",
+            "capitalize"
+          ]
+        },
+        "mysql.format.identifierCase": {
+          "type": "string",
+          "description": "Identifier casing for SQL formatting",
+          "default": null,
+          "enum": [
+            null,
+            "upper",
+            "lower",
+            "capitalize"
+          ]
+        },
+        "mysql.format.stripComments": {
+          "type": "boolean",
+          "default": false,
+          "description": "Strip comments when formatting SQL"
+        },
+        "mysql.format.reindent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Reindent SQL when formatting"
+        },
+        "mysql.logDebugInfo": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "webpack",
+    "watch": "webpack --watch",
+    "package": "webpack --mode production --devtool hidden-source-map",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "pretest": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "vsce:package": "vsce package"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.0",
+    "@azure/msal-node": "^2.5.0",
+    "@azure/arm-mysql-flexible": "^3.0.0",
+    "@azure/identity": "^4.0.0",
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "exceljs": "^4.3.0",
+    "xml2js": "^0.6.0",
+    "sql-formatter": "^12.2.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "@types/xml2js": "^0.4.14",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.0.0",
+    "glob": "^10.3.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.0"
+  }
+}

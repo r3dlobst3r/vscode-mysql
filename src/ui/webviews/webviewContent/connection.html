@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+    <title>MySQL Connection</title>
+    <style>
+        :root {
+            --container-padding: 20px;
+            --input-padding: 8px 12px;
+            --input-margin: 8px 0;
+            --border-radius: 2px;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+        }
+
+        .container {
+            padding: var(--container-padding);
+            max-width: 600px;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .header h2 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--vscode-foreground);
+            font-size: 13px;
+            opacity: 0.7;
+            border-bottom: 2px solid transparent;
+            transition: opacity 0.2s, border-color 0.2s;
+        }
+
+        .tab:hover {
+            opacity: 1;
+        }
+
+        .tab.active {
+            opacity: 1;
+            border-bottom-color: var(--vscode-focusBorder);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .form-group label.required::after {
+            content: " *";
+            color: var(--vscode-errorForeground);
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: var(--input-padding);
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
+
+        .form-group input[type="password"] {
+            font-family: monospace;
+        }
+
+        .form-group .description {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--vscode-panel-border);
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        button.primary {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        button.primary:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        button.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        button.secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .status {
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.success {
+            background: var(--vscode-testing-iconPassed);
+            color: var(--vscode-editor-background);
+            display: block;
+        }
+
+        .status.error {
+            background: var(--vscode-errorBackground);
+            color: var(--vscode-errorForeground);
+            display: block;
+        }
+
+        .status.info {
+            background: var(--vscode-infoBackground);
+            color: var(--vscode-infoForeground);
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+
+        .file-input-group {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+
+        .file-input-group input {
+            flex: 1;
+        }
+
+        .file-input-group button {
+            padding: 8px 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2 id="dialog-title">New MySQL Connection</h2>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="basic">Basic</button>
+            <button class="tab" data-tab="advanced">Advanced</button>
+            <button class="tab" data-tab="ssl">SSL</button>
+        </div>
+
+        <form id="connection-form">
+            <!-- Basic Tab -->
+            <div class="tab-content active" data-tab="basic">
+                <div class="form-group">
+                    <label for="name" class="required">Connection Name</label>
+                    <input type="text" id="name" name="name" placeholder="My MySQL Server" required>
+                    <div class="description">A friendly name for this connection</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="host" class="required">Host</label>
+                    <input type="text" id="host" name="host" placeholder="localhost" required>
+                    <div class="description">Server hostname or IP address</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="port" class="required">Port</label>
+                        <input type="number" id="port" name="port" value="3306" min="1" max="65535" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="database">Database</label>
+                        <input type="text" id="database" name="database" placeholder="(optional)">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="authenticationType" class="required">Authentication Type</label>
+                    <select id="authenticationType" name="authenticationType">
+                        <option value="SqlLogin">Username and Password</option>
+                        <option value="AzureMFAAndUser">Azure MFA and User</option>
+                    </select>
+                </div>
+
+                <div id="sql-auth-fields">
+                    <div class="form-group">
+                        <label for="username" class="required">Username</label>
+                        <input type="text" id="username" name="username" placeholder="root" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password" class="required">Password</label>
+                        <input type="password" id="password" name="password" required>
+                        <div class="description">Password is stored securely in VS Code's secret storage</div>
+                    </div>
+                </div>
+
+                <div id="azure-auth-fields" style="display: none;">
+                    <div class="status info">
+                        Azure AD authentication will open a browser window for you to sign in with your Microsoft account.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Tab -->
+            <div class="tab-content" data-tab="advanced">
+                <div class="form-group">
+                    <label for="connectTimeout">Connection Timeout (seconds)</label>
+                    <input type="number" id="connectTimeout" name="connectTimeout" value="10" min="1" max="300">
+                    <div class="description">Maximum time to wait for a connection</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="clientFlags">Client Flags</label>
+                    <input type="text" id="clientFlags" name="clientFlags" placeholder="(optional)">
+                    <div class="description">MySQL client connection flags (comma-separated)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="sqlMode">SQL Mode</label>
+                    <input type="text" id="sqlMode" name="sqlMode" placeholder="(optional)">
+                    <div class="description">MySQL SQL mode settings</div>
+                </div>
+            </div>
+
+            <!-- SSL Tab -->
+            <div class="tab-content" data-tab="ssl">
+                <div class="form-group">
+                    <label for="sslMode">SSL Mode</label>
+                    <select id="sslMode" name="sslMode">
+                        <option value="require">Require (default)</option>
+                        <option value="disable">Disable</option>
+                        <option value="verify_ca">Verify CA</option>
+                        <option value="verify_identity">Verify Identity</option>
+                    </select>
+                    <div class="description">SSL/TLS encryption mode for the connection</div>
+                </div>
+
+                <div id="ssl-certificate-fields" style="display: none;">
+                    <div class="form-group">
+                        <label for="sslCa">CA Certificate Path</label>
+                        <div class="file-input-group">
+                            <input type="text" id="sslCa" name="sslCa" placeholder="/path/to/ca.pem">
+                            <button type="button" class="secondary" onclick="browseCertificate('sslCa')">Browse...</button>
+                        </div>
+                        <div class="description">Path to the Certificate Authority (CA) certificate file</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sslCert">Client Certificate Path</label>
+                        <div class="file-input-group">
+                            <input type="text" id="sslCert" name="sslCert" placeholder="/path/to/cert.pem">
+                            <button type="button" class="secondary" onclick="browseCertificate('sslCert')">Browse...</button>
+                        </div>
+                        <div class="description">Path to the client certificate file</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sslKey">Client Key Path</label>
+                        <div class="file-input-group">
+                            <input type="text" id="sslKey" name="sslKey" placeholder="/path/to/key.pem">
+                            <button type="button" class="secondary" onclick="browseCertificate('sslKey')">Browse...</button>
+                        </div>
+                        <div class="description">Path to the client private key file</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="test-btn" class="secondary">Test Connection</button>
+                <button type="submit" id="save-btn" class="primary">Save Connection</button>
+                <button type="button" id="cancel-btn" class="secondary">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+
+                // Update active tab
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Update active content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.querySelector(`.tab-content[data-tab="${tabName}"]`).classList.add('active');
+            });
+        });
+
+        // Authentication type change
+        document.getElementById('authenticationType').addEventListener('change', (e) => {
+            const sqlAuthFields = document.getElementById('sql-auth-fields');
+            const azureAuthFields = document.getElementById('azure-auth-fields');
+
+            if (e.target.value === 'SqlLogin') {
+                sqlAuthFields.style.display = 'block';
+                azureAuthFields.style.display = 'none';
+                document.getElementById('username').required = true;
+                document.getElementById('password').required = true;
+            } else {
+                sqlAuthFields.style.display = 'none';
+                azureAuthFields.style.display = 'block';
+                document.getElementById('username').required = false;
+                document.getElementById('password').required = false;
+            }
+        });
+
+        // SSL mode change
+        document.getElementById('sslMode').addEventListener('change', (e) => {
+            const certFields = document.getElementById('ssl-certificate-fields');
+            const mode = e.target.value;
+
+            if (mode === 'verify_ca' || mode === 'verify_identity') {
+                certFields.style.display = 'block';
+            } else {
+                certFields.style.display = 'none';
+            }
+        });
+
+        // Test connection
+        document.getElementById('test-btn').addEventListener('click', () => {
+            const formData = getFormData();
+            showStatus('Testing connection...', 'info');
+            vscode.postMessage({
+                command: 'testConnection',
+                data: formData
+            });
+        });
+
+        // Save connection
+        document.getElementById('connection-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = getFormData();
+            vscode.postMessage({
+                command: 'saveConnection',
+                data: formData
+            });
+        });
+
+        // Cancel
+        document.getElementById('cancel-btn').addEventListener('click', () => {
+            vscode.postMessage({
+                command: 'cancel'
+            });
+        });
+
+        // Browse for certificate
+        function browseCertificate(fieldId) {
+            vscode.postMessage({
+                command: 'browseCertificate',
+                fieldId: fieldId
+            });
+        }
+
+        // Get form data
+        function getFormData() {
+            const form = document.getElementById('connection-form');
+            const formData = new FormData(form);
+            const data = {};
+
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            return data;
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.className = 'status';
+                }, 5000);
+            }
+        }
+
+        // Handle messages from extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+
+            switch (message.command) {
+                case 'loadConnection':
+                    loadConnectionData(message.data);
+                    break;
+                case 'testResult':
+                    if (message.success) {
+                        showStatus('✓ Connection test successful!', 'success');
+                    } else {
+                        showStatus('✗ Connection test failed: ' + message.error, 'error');
+                    }
+                    break;
+                case 'saveResult':
+                    if (message.success) {
+                        showStatus('✓ Connection saved successfully!', 'success');
+                    } else {
+                        showStatus('✗ Failed to save connection: ' + message.error, 'error');
+                    }
+                    break;
+                case 'setCertificatePath':
+                    document.getElementById(message.fieldId).value = message.path;
+                    break;
+            }
+        });
+
+        // Load connection data for editing
+        function loadConnectionData(data) {
+            if (!data) return;
+
+            document.getElementById('dialog-title').textContent = 'Edit MySQL Connection';
+            document.getElementById('name').value = data.name || '';
+            document.getElementById('host').value = data.host || '';
+            document.getElementById('port').value = data.port || 3306;
+            document.getElementById('database').value = data.database || '';
+            document.getElementById('authenticationType').value = data.authenticationType || 'SqlLogin';
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('connectTimeout').value = data.connectTimeout || 10;
+            document.getElementById('clientFlags').value = data.clientFlags || '';
+            document.getElementById('sqlMode').value = data.sqlMode || '';
+
+            if (data.ssl) {
+                document.getElementById('sslMode').value = data.ssl.mode || 'require';
+                document.getElementById('sslCa').value = data.ssl.ca || '';
+                document.getElementById('sslCert').value = data.ssl.cert || '';
+                document.getElementById('sslKey').value = data.ssl.key || '';
+
+                // Trigger SSL mode change to show/hide certificate fields
+                document.getElementById('sslMode').dispatchEvent(new Event('change'));
+            }
+
+            // Trigger auth type change to show/hide auth fields
+            document.getElementById('authenticationType').dispatchEvent(new Event('change'));
+
+            // Store connection ID for editing
+            if (data.id) {
+                document.getElementById('connection-form').dataset.connectionId = data.id;
+            }
+        }
+
+        // Request initial data if editing
+        vscode.postMessage({ command: 'ready' });
+    </script>
+</body>
+</html>
