@@ -98,20 +98,23 @@ The connection is now saved and will appear in the MySQL explorer!
 
 ## Commands
 
-- `MySQL: New Connection` - Create a new connection (coming in Phase 3)
+- `MySQL: New Connection` - Create a new connection
 - `MySQL: Disconnect` - Disconnect from a server
-- `MySQL: Edit Connection` - Edit an existing connection (coming in Phase 3)
+- `MySQL: Edit Connection` - Edit an existing connection
 - `MySQL: Delete Connection` - Delete a connection
 - `MySQL: Refresh` - Refresh the connection tree
-- `MySQL: Execute Query` (Ctrl+Shift+E) - Execute SQL query (coming in Phase 5)
+- `MySQL: Execute Query` (Ctrl+Shift+E) - Execute SQL query and display results
 - `MySQL: New Query` - Create a new SQL file
 - `MySQL: Create Database` - Create a new database (coming in Phase 7)
 - `MySQL: Export Results` - Export query results (coming in Phase 6)
 - `MySQL: Deploy to Azure` - Deploy MySQL to Azure
+- `MySQL: Select Top 1000 Rows` - Generate SELECT query for table data
+- `MySQL: View Table Structure` - Display table column information
+- `MySQL: Script as CREATE` - Generate CREATE TABLE/VIEW statement
 
 ## Keyboard Shortcuts
 
-- `Ctrl+Shift+E` (Mac: `Cmd+Shift+E`) - Execute SQL query (when implemented)
+- `Ctrl+Shift+E` (Mac: `Cmd+Shift+E`) - Execute SQL query and display results
 
 ## SSL Configuration
 
@@ -129,13 +132,13 @@ The extension supports multiple SSL modes:
 
 ## Development Status
 
-This extension is currently in active development. Phases 1 and 3 are complete. The following phases are planned:
+This extension is currently in active development. The following phases are complete or planned:
 
 - **Phase 1**: ✅ Complete - Project foundation, connection management, tree view
 - **Phase 2**: 🚧 Planned - Azure AD authentication
 - **Phase 3**: ✅ Complete - Connection dialog webview
 - **Phase 4**: ✅ Complete - Database object explorer
-- **Phase 5**: 🚧 Planned - Query execution and results display
+- **Phase 5**: ✅ Complete - Query execution and results display
 - **Phase 6**: 🚧 Planned - Export functionality
 - **Phase 7**: 🚧 Planned - Create database dialog
 - **Phase 8-9**: 🚧 Planned - Azure firewall and deployment
@@ -144,10 +147,36 @@ This extension is currently in active development. Phases 1 and 3 are complete. 
 - **Phase 12**: 🚧 Planned - Testing and QA
 - **Phase 13**: 🚧 Planned - Final packaging
 
+## Building from Source
+
+### Prerequisites
+- Node.js 18.x or 20.x
+- npm
+
+### Build Steps
+```bash
+# Install dependencies
+npm install
+
+# Compile TypeScript
+npm run compile
+
+# Package VSIX
+npm run vsce:package
+```
+
+The VSIX file will be created in the root directory as `vscode-mysql-1.0.0.vsix`.
+
+### CI/CD
+This project uses GitHub Actions for continuous integration and releases:
+- **CI Workflow**: Builds and tests on every push
+- **Release Workflow**: Creates GitHub releases when code is merged to main
+
+See [.github/workflows/README.md](.github/workflows/README.md) for details.
+
 ## Known Limitations
 
-- Query execution not yet implemented (queries can be generated but not executed)
-- Export functionality not yet implemented
+- Export functionality not yet implemented (placeholder in results panel)
 - Azure AD authentication not yet available
 - Table data editing not yet available
 
