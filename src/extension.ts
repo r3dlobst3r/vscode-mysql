@@ -173,13 +173,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function handleConnect(node?: ConnectionNode) {
     try {
+        logger.debug('handleConnect called');
         if (node) {
+            logger.debug(`Attempting to connect to: ${node.connection.name} (${node.connection.host}:${node.connection.port})`);
             // Connect to existing connection
             const connection = node.connection;
             let credentials = await connectionManager.getCredentials(connection.id);
 
+            logger.debug(`Got credentials for connection: ${connection.id}`);
+
             // Handle Azure AD authentication
             if (connection.authenticationType === 'AzureMFAAndUser') {
+                logger.debug('Using Azure AD authentication');
                 // Try to get existing token or authenticate
                 let token = await tokenManager.getAccessToken(connection.id);
 
@@ -198,12 +203,16 @@ async function handleConnect(node?: ConnectionNode) {
                 credentials = { azureToken: token };
             } else {
                 // SQL Login - require password
+                logger.debug('Using SQL Login authentication');
                 if (!credentials || !credentials.password) {
+                    logger.error('No password found for connection');
                     vscode.window.showErrorMessage('No password found for this connection. Please edit the connection to add a password.');
                     return;
                 }
+                logger.debug('Password found, proceeding with connection');
             }
 
+            logger.info(`Attempting connection to ${connection.name}...`);
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
                 title: `Connecting to ${connection.name}...`,
@@ -292,27 +301,42 @@ async function handleDeleteConnection(node: ConnectionNode) {
 
 async function handleExecuteQuery() {
     try {
+        logger.debug('handleExecuteQuery called');
         // Get active editor
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
+            logger.warn('No active editor found');
             vscode.window.showErrorMessage('No active editor. Please open a SQL file first.');
             return;
         }
 
+        logger.debug(`Active editor: ${editor.document.fileName}`);
+
         // Extract SQL query
         const sql = getQueryFromEditor(editor);
         if (!sql) {
+            logger.warn('No SQL query found in editor');
             vscode.window.showErrorMessage('No SQL query found. Please select a query or place cursor in a statement.');
             return;
         }
 
+        logger.debug(`Extracted SQL: ${sql.substring(0, 100)}${sql.length > 100 ? '...' : ''}`);
+
         // Get connected servers
         const connections = await connectionManager.getConnections();
+        logger.debug(`Total connections found: ${connections.length}`);
+
         const connectedConnections = connections.filter(conn =>
             treeDataProvider.isConnectionConnected(conn.id)
         );
 
+        logger.debug(`Connected connections: ${connectedConnections.length}`);
+        connectedConnections.forEach(conn => {
+            logger.debug(`  - ${conn.name} (${conn.id})`);
+        });
+
         if (connectedConnections.length === 0) {
+            logger.warn('No active connections found');
             vscode.window.showErrorMessage('No active connection. Please connect to a MySQL server first.');
             return;
         }
@@ -321,6 +345,7 @@ async function handleExecuteQuery() {
         let connectionId: string;
         if (connectedConnections.length === 1) {
             connectionId = connectedConnections[0].id;
+            logger.debug(`Using single connection: ${connectedConnections[0].name}`);
         } else {
             // Show quick pick for multiple connections
             const items = connectedConnections.map(conn => ({
@@ -334,12 +359,15 @@ async function handleExecuteQuery() {
             });
 
             if (!selected) {
+                logger.debug('User cancelled connection selection');
                 return; // User cancelled
             }
 
             connectionId = selected.connectionId;
+            logger.debug(`User selected connection: ${selected.label}`);
         }
 
+        logger.info(`Executing query on connection: ${connectionId}`);
         // Execute query with progress indicator
         const results = await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
@@ -357,13 +385,17 @@ async function handleExecuteQuery() {
     }
 }
 
-async function handleNewQuery(node: ConnectionNode) {
-    // Create a new SQL file
+async function handleNewQuery(node?: ConnectionNode) {
+    // Create a new untitled SQL document
+    const connectionName = node ? node.connection.name : 'MySQL';
     const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
-        content: `-- New Query for ${node.connection.name}\n\n`
+        content: `-- New Query for ${connectionName}\n-- Press Cmd+Shift+E (or click Execute button) to run the query\n\n`
     });
     await vscode.window.showTextDocument(doc);
+
+    // If a specific connection was selected, we could store it for this editor
+    // For now, users can select from connected servers when executing
 }
 
 async function handleCreateDatabase(node: ConnectionNode) {

@@ -51,8 +51,8 @@
     "commands": [
       {
         "command": "mysql.connect",
-        "title": "MySQL: New Connection",
-        "icon": "$(add)"
+        "title": "MySQL: Connect to Server",
+        "icon": "$(plug)"
       },
       {
         "command": "mysql.disconnect",
@@ -78,7 +78,8 @@
       },
       {
         "command": "mysql.newQuery",
-        "title": "MySQL: New Query"
+        "title": "MySQL: New Query",
+        "icon": "$(new-file)"
       },
       {
         "command": "mysql.createDatabase",
@@ -121,6 +122,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "mysql.newQuery",
+          "when": "view == mysqlConnections",
+          "group": "navigation"
+        },
+        {
           "command": "mysql.connect",
           "when": "view == mysqlConnections",
           "group": "navigation"
@@ -136,6 +142,10 @@
           "command": "mysql.connect",
           "when": "view == mysqlConnections && viewItem == connection-disconnected",
           "group": "inline"
+        },
+        {
+          "command": "mysql.connect",
+          "when": "view == mysqlConnections && viewItem == connection-disconnected"
         },
         {
           "command": "mysql.disconnect",
@@ -184,7 +194,23 @@
         {
           "command": "mysql.executeQuery",
           "when": "editorLangId == sql",
-          "group": "navigation"
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "mysql.executeQuery",
+          "when": "editorLangId == sql",
+          "group": "mysql@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mysql.executeQuery",
+          "when": "editorLangId == sql"
+        },
+        {
+          "command": "mysql.newQuery"
         }
       ]
     },
