@@ -22,6 +22,34 @@ All notable changes to the "MySQL for Visual Studio Code" extension will be docu
   - Proper error handling for authentication failures
 - SSL enforcement for Azure AD connections (required by Azure MySQL)
 
+### Added - Phase 11 (Enhanced Settings & Configuration)
+- Additional configuration options for customization:
+  - Auto-connect on startup to default connection
+  - Show/hide system databases (information_schema, performance_schema, sys, mysql)
+  - Enable/disable IntelliSense features
+  - Control table and column suggestions in IntelliSense
+  - Configure connection pool size (1-100 connections)
+  - Results display settings (rows per page, max column width)
+- Auto-connect feature activates default connection on extension startup
+- System databases filter respects user preference
+- IntelliSense can be toggled on/off globally or per feature
+
+### Added - Phase 8 (Azure Firewall Rule Management)
+- Automatic Azure MySQL Flexible Server detection from connection hostname
+- Azure resource information extraction (subscription, resource group, server name)
+- Firewall rule management using Azure SDK:
+  - List existing firewall rules
+  - Create firewall rules for current IP address
+  - Create custom firewall rules with IP range
+  - Delete firewall rules
+- Automatic firewall error detection and handling:
+  - Detects connection failures due to firewall blocks
+  - Prompts user to add current IP to firewall rules
+  - Auto-creates firewall rule with single click
+  - Offers connection retry after rule creation
+- Current IP address detection via external API
+- Integration with Azure DefaultAzureCredential for authentication
+
 ### Added - Phase 10 (SQL Language Features)
 - IntelliSense autocomplete for SQL code:
   - 60+ MySQL keywords (SELECT, FROM, WHERE, INSERT, CREATE, etc.)
@@ -148,16 +176,17 @@ All notable changes to the "MySQL for Visual Studio Code" extension will be docu
 - Table data editing not yet available
 - Query history UI not yet available (tracked internally)
 - Database drop functionality not yet available
-- Azure firewall rule management not yet available
 
-### Coming in Future Releases
+### Development Status
+- Phase 1: ✅ COMPLETED - Project foundation, connection management, tree view
 - Phase 2: ✅ COMPLETED - Azure AD authentication (MFA and User)
+- Phase 3: ✅ COMPLETED - Connection dialog webview
 - Phase 4: ✅ COMPLETED - Full database object explorer
 - Phase 5: ✅ COMPLETED - Query execution with rich results display
 - Phase 6: ✅ COMPLETED - Export to CSV, JSON, Excel, XML
 - Phase 7: ✅ COMPLETED - Create database dialog with charset/collation
+- Phase 8: ✅ COMPLETED - Azure firewall rule management
+- Phase 9: ✅ COMPLETED - Azure deployment (portal link integration)
 - Phase 10: ✅ COMPLETED - SQL IntelliSense and formatting
-- Phase 8: Azure firewall rule management
-- Phase 9: Azure deployment wizard integration
-- Phase 11: Additional configuration options
-- Phase 12: Comprehensive testing
+- Phase 11: ✅ COMPLETED - Enhanced settings and configuration
+- Phase 12: ✅ IN PROGRESS - Final documentation and packaging

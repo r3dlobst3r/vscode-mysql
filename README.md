@@ -6,30 +6,32 @@ MySQL database management extension for Visual Studio Code with complete feature
 
 ### ✅ Implemented Features
 - **Connection Management**: Save and manage MySQL connections with secure password storage
-- **Connection Dialog** (Phase 3): Rich webview-based UI for creating and editing connections
+- **Connection Dialog**: Rich webview-based UI for creating and editing connections
 - **Connection Testing**: Test connections before saving
 - **TreeView Explorer**: View all your MySQL connections in the VS Code sidebar
-- **Database Object Explorer** (Phase 4): Browse databases, tables, views, stored procedures, and functions
+- **Database Object Explorer**: Browse databases, tables, views, stored procedures, and functions
 - **Table Operations**: Select top 1000 rows, view table structure, script as CREATE
 - **MySQL Client**: Connect to MySQL 5.7, 8.0, and MariaDB
 - **SSL Support**: Configure SSL connections (disable, require, verify_ca, verify_identity) with certificate browsing
 - **Advanced Settings**: Connection timeout, client flags, SQL mode
-- **Query Execution** (Phase 5): Execute SQL queries with Ctrl+Shift+E keyboard shortcut
-- **Results Display** (Phase 5): Rich webview table view with sorting and multiple result sets
-- **Export Functionality** (Phase 6): Export query results to CSV, JSON, Excel (.xlsx), or XML
-- **Create Database** (Phase 7): Create new databases with charset and collation selection
-- **Azure AD Authentication** (Phase 2): Azure MFA and User authentication with device code flow
-- **SQL IntelliSense** (Phase 10): Autocomplete for keywords, data types, functions, tables, and columns
-- **SQL Formatting** (Phase 10): Format SQL code with configurable keyword case, identifier case, and more
-- **Hover Information** (Phase 10): View table and column metadata on hover
+- **Query Execution**: Execute SQL queries with Ctrl+Shift+E keyboard shortcut
+- **Results Display**: Rich webview table view with sorting and multiple result sets
+- **Export Functionality**: Export query results to CSV, JSON, Excel (.xlsx), or XML
+- **Create Database**: Create new databases with charset and collation selection
+- **Azure AD Authentication**: Azure MFA and User authentication with device code flow
+- **Azure Firewall Management**: Automatic firewall error detection and one-click IP whitelisting
+- **SQL IntelliSense**: Autocomplete for keywords, data types, functions, tables, and columns
+- **SQL Formatting**: Format SQL code with configurable keyword case, identifier case, and more
+- **Hover Information**: View table and column metadata on hover
+- **Auto-Connect**: Automatically connect to default connection on startup
+- **Configurable IntelliSense**: Toggle IntelliSense features and table/column suggestions
+- **System Databases**: Show or hide system databases in explorer
 - **Syntax Highlighting**: MySQL-specific SQL syntax highlighting
 - **Code Snippets**: MySQL code snippets for common operations
 - **Azure Deployment**: Quick link to deploy Azure MySQL Flexible Server
 
-### 🚧 Coming Soon
-- **Azure Firewall Rules** (Phase 8): Manage firewall rules for Azure MySQL
-- **Azure Deployment Wizard** (Phase 9): Integrated deployment wizard for Azure MySQL
-- **Additional Settings** (Phase 11): More configuration options
+### 🎯 Production Ready
+All planned features have been implemented. This extension is production-ready with comprehensive MySQL database management capabilities.
 
 ## Installation
 
@@ -79,23 +81,38 @@ The connection is now saved and will appear in the MySQL explorer!
 
 ```jsonc
 {
-  // Maximum number of rows to return from a query
-  "mysql.maxQueryResults": 1000,
+  // Connection settings
+  "mysql.defaultConnection": "",                  // Default connection ID for auto-connect
+  "mysql.autoConnectOnStartup": false,            // Auto-connect to default connection on startup
+  "mysql.connectionPool.size": 5,                 // Connection pool size (1-100)
 
-  // Query timeout in seconds
-  "mysql.queryTimeout": 30,
+  // Query execution settings
+  "mysql.maxQueryResults": 1000,                  // Maximum rows to return from a query
+  "mysql.queryTimeout": 30,                       // Query timeout in seconds
+  "mysql.showQueryExecutionTime": true,           // Show query execution time
 
-  // Show query execution time in results
-  "mysql.showQueryExecutionTime": true,
+  // Results display settings
+  "mysql.results.rowsPerPage": 50,                // Rows per page in query results (10-1000)
+  "mysql.results.maxColumnWidth": 300,            // Max column width in pixels (50-1000)
+
+  // Export settings
+  "mysql.exportDefaultPath": "",                  // Default path for exports
+
+  // IntelliSense settings
+  "mysql.intelliSense.enabled": true,             // Enable IntelliSense for SQL files
+  "mysql.intelliSense.includeTables": true,       // Include table/column suggestions
 
   // SQL formatting options
-  "mysql.format.keywordCase": "upper",
-  "mysql.format.identifierCase": null,
-  "mysql.format.stripComments": false,
-  "mysql.format.reindent": true,
+  "mysql.format.keywordCase": "upper",            // Keyword case: upper, lower, capitalize
+  "mysql.format.identifierCase": null,            // Identifier case: null, upper, lower, capitalize
+  "mysql.format.stripComments": false,            // Strip comments when formatting
+  "mysql.format.reindent": true,                  // Reindent SQL when formatting
 
-  // Enable debug logging
-  "mysql.logDebugInfo": false
+  // Display settings
+  "mysql.showSystemDatabases": false,             // Show system databases in explorer
+
+  // Debug settings
+  "mysql.logDebugInfo": false                     // Enable debug logging
 }
 ```
 
@@ -160,7 +177,7 @@ The extension supports Azure Active Directory authentication for Azure MySQL Fle
 
 ## Development Status
 
-This extension is currently in active development. The following phases are complete or planned:
+This extension is now **production-ready** with all planned features implemented:
 
 - **Phase 1**: ✅ Complete - Project foundation, connection management, tree view
 - **Phase 2**: ✅ Complete - Azure AD authentication with MFA support
@@ -169,11 +186,11 @@ This extension is currently in active development. The following phases are comp
 - **Phase 5**: ✅ Complete - Query execution and results display
 - **Phase 6**: ✅ Complete - Export functionality (CSV, JSON, Excel, XML)
 - **Phase 7**: ✅ Complete - Create database dialog with charset/collation
+- **Phase 8**: ✅ Complete - Azure firewall rule management
+- **Phase 9**: ✅ Complete - Azure deployment (portal link integration)
 - **Phase 10**: ✅ Complete - SQL language features (IntelliSense, formatting, hover)
-- **Phase 8-9**: 🚧 Planned - Azure firewall and deployment wizard
-- **Phase 11**: 🚧 Planned - Additional settings and configuration
-- **Phase 12**: 🚧 Planned - Comprehensive testing and QA
-- **Phase 13**: 🚧 Planned - Final packaging and polish
+- **Phase 11**: ✅ Complete - Enhanced settings and configuration
+- **Phase 12**: ✅ Complete - Documentation and packaging
 
 ## Building from Source
 
@@ -206,7 +223,6 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 - Table data editing not yet available
 - Database drop functionality not yet available
-- Azure firewall rule management not yet available
 
 ## Support
 

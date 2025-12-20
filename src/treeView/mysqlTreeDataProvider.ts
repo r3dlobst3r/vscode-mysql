@@ -65,4 +65,12 @@ export class MySQLTreeDataProvider implements vscode.TreeDataProvider<TreeItemNo
     public isConnectionConnected(connectionId: string): boolean {
         return this.connectedConnectionIds.has(connectionId);
     }
+
+    /**
+     * Get a connection node by ID
+     */
+    public async getConnectionNode(connectionId: string): Promise<ConnectionNode | undefined> {
+        const connections = await this.getConnections();
+        return connections.find(node => node.connection.id === connectionId);
+    }
 }

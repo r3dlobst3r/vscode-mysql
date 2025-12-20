@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { MySQLClient } from '../mysqlClient';
 import { logger } from '../utils/logger';
+import { CONFIG_INTELLISENSE_ENABLED, CONFIG_INTELLISENSE_INCLUDE_TABLES } from '../utils/constants';
 
 /**
  * MySQL keywords for autocomplete
@@ -89,6 +90,14 @@ export class MySQLCompletionProvider implements vscode.CompletionItemProvider {
         token: vscode.CancellationToken,
         context: vscode.CompletionContext
     ): Promise<vscode.CompletionItem[]> {
+        // Check if IntelliSense is enabled
+        const config = vscode.workspace.getConfiguration();
+        const intelliSenseEnabled = config.get<boolean>(CONFIG_INTELLISENSE_ENABLED, true);
+
+        if (!intelliSenseEnabled) {
+            return [];
+        }
+
         const items: vscode.CompletionItem[] = [];
 
         // Add MySQL keywords
@@ -115,8 +124,9 @@ export class MySQLCompletionProvider implements vscode.CompletionItemProvider {
             items.push(item);
         }
 
-        // Add tables and columns from active connection (if available)
-        if (this.mysqlClient && this.activeConnectionId) {
+        // Add tables and columns from active connection (if configured)
+        const includeTables = config.get<boolean>(CONFIG_INTELLISENSE_INCLUDE_TABLES, true);
+        if (includeTables && this.mysqlClient && this.activeConnectionId) {
             try {
                 const tableItems = await this.getTableCompletions(this.activeConnectionId);
                 items.push(...tableItems);

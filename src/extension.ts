@@ -14,6 +14,8 @@ import { logger } from './utils/logger';
 import { MySQLCompletionProvider } from './language/completionProvider';
 import { MySQLHoverProvider } from './language/hoverProvider';
 import { MySQLFormattingProvider } from './language/formattingProvider';
+import { FirewallManager } from './azure/firewallManager';
+import { ResourceDetector } from './azure/resourceDetector';
 import {
     COMMAND_CONNECT,
     COMMAND_DISCONNECT,
@@ -43,6 +45,7 @@ let tokenManager: TokenManager;
 let completionProvider: MySQLCompletionProvider;
 let hoverProvider: MySQLHoverProvider;
 let formattingProvider: MySQLFormattingProvider;
+let firewallManager: FirewallManager;
 
 export function activate(context: vscode.ExtensionContext) {
     logger.info('MySQL extension is now active');
@@ -51,6 +54,7 @@ export function activate(context: vscode.ExtensionContext) {
     connectionManager = new ConnectionManager(context);
     mysqlClient = new MySQLClient();
     tokenManager = new TokenManager(context);
+    firewallManager = new FirewallManager();
     connectionDialog = new ConnectionDialog(context, connectionManager, mysqlClient, tokenManager);
     databaseDialog = new DatabaseDialog(context, mysqlClient);
     metadataProvider = new MetadataProvider(mysqlClient);
@@ -79,6 +83,24 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.languages.registerDocumentFormattingEditProvider('sql', formattingProvider),
         vscode.languages.registerDocumentRangeFormattingEditProvider('sql', formattingProvider)
     );
+
+    // Auto-connect on startup if configured
+    const autoConnect = vscode.workspace.getConfiguration().get<boolean>('mysql.autoConnectOnStartup', false);
+    if (autoConnect) {
+        const defaultConnectionId = vscode.workspace.getConfiguration().get<string>('mysql.defaultConnection', '');
+        if (defaultConnectionId) {
+            setTimeout(async () => {
+                const connections = await connectionManager.getConnections();
+                const defaultConnection = connections.find(c => c.id === defaultConnectionId);
+                if (defaultConnection) {
+                    const node = await treeDataProvider.getConnectionNode(defaultConnection.id);
+                    if (node) {
+                        await handleConnect(node);
+                    }
+                }
+            }, 1000); // Delay to allow extension to fully activate
+        }
+    }
 
     // Register commands
     context.subscriptions.push(
@@ -202,6 +224,29 @@ async function handleConnect(node?: ConnectionNode) {
         }
     } catch (error) {
         logger.error('Failed to connect', error as Error);
+
+        // Check if this is an Azure MySQL connection with a firewall error
+        if (node && ResourceDetector.isAzureMySQL(node.connection)) {
+            if (FirewallManager.isFirewallError(error as Error)) {
+                const resourceInfo = ResourceDetector.getAzureResourceInfo(node.connection);
+                if (resourceInfo) {
+                    const handled = await firewallManager.handleFirewallError(resourceInfo);
+                    if (handled) {
+                        // User created firewall rule, prompt to retry connection
+                        const retry = await vscode.window.showInformationMessage(
+                            'Firewall rule created. Would you like to retry the connection?',
+                            'Retry',
+                            'Cancel'
+                        );
+                        if (retry === 'Retry') {
+                            await handleConnect(node);
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
         vscode.window.showErrorMessage(`Failed to connect: ${(error as Error).message}`);
     }
 }

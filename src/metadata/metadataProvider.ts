@@ -1,5 +1,7 @@
+import * as vscode from 'vscode';
 import { MySQLClient } from '../mysqlClient';
 import { logger } from '../utils/logger';
+import { CONFIG_SHOW_SYSTEM_DATABASES } from '../utils/constants';
 
 export interface DatabaseInfo {
     name: string;
@@ -37,12 +39,18 @@ export class MetadataProvider {
                 name: row.Database || row.database
             }));
 
-            // Filter out system databases for cleaner view (optional)
-            return databases.filter(db =>
-                db.name !== 'information_schema' &&
-                db.name !== 'performance_schema' &&
-                db.name !== 'sys'
-            );
+            // Filter out system databases unless configured to show them
+            const showSystemDbs = vscode.workspace.getConfiguration().get<boolean>(CONFIG_SHOW_SYSTEM_DATABASES, false);
+            if (!showSystemDbs) {
+                return databases.filter(db =>
+                    db.name !== 'information_schema' &&
+                    db.name !== 'performance_schema' &&
+                    db.name !== 'sys' &&
+                    db.name !== 'mysql'
+                );
+            }
+
+            return databases;
         } catch (error) {
             logger.error('Failed to get databases', error as Error);
             throw error;

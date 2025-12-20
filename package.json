@@ -286,6 +286,47 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging"
+        },
+        "mysql.autoConnectOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect to the default connection on startup"
+        },
+        "mysql.showSystemDatabases": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show system databases (information_schema, performance_schema, sys, mysql)"
+        },
+        "mysql.intelliSense.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable IntelliSense for SQL files"
+        },
+        "mysql.intelliSense.includeTables": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include table and column suggestions in IntelliSense"
+        },
+        "mysql.connectionPool.size": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum number of connections in the connection pool",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "mysql.results.rowsPerPage": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of rows to display per page in query results",
+          "minimum": 10,
+          "maximum": 1000
+        },
+        "mysql.results.maxColumnWidth": {
+          "type": "number",
+          "default": 300,
+          "description": "Maximum column width in pixels in query results",
+          "minimum": 50,
+          "maximum": 1000
         }
       }
     }
