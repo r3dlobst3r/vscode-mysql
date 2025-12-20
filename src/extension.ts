@@ -4,10 +4,12 @@ import { MySQLClient } from './mysqlClient';
 import { MySQLTreeDataProvider } from './treeView/mysqlTreeDataProvider';
 import { ConnectionNode, setMetadataProvider, TableNode, ViewNode, DatabaseNode } from './treeView/treeItems';
 import { ConnectionDialog } from './ui/webviews/connectionDialog';
+import { DatabaseDialog } from './ui/webviews/databaseDialog';
 import { MetadataProvider } from './metadata/metadataProvider';
 import { QueryRunner } from './queries/queryRunner';
 import { ResultsPanel } from './ui/webviews/resultsPanel';
 import { getQueryFromEditor } from './queries/queryParser';
+import { TokenManager } from './auth/tokenManager';
 import { logger } from './utils/logger';
 import {
     COMMAND_CONNECT,
@@ -30,9 +32,11 @@ let connectionManager: ConnectionManager;
 let mysqlClient: MySQLClient;
 let treeDataProvider: MySQLTreeDataProvider;
 let connectionDialog: ConnectionDialog;
+let databaseDialog: DatabaseDialog;
 let metadataProvider: MetadataProvider;
 let queryRunner: QueryRunner;
 let resultsPanel: ResultsPanel;
+let tokenManager: TokenManager;
 
 export function activate(context: vscode.ExtensionContext) {
     logger.info('MySQL extension is now active');
@@ -40,7 +44,9 @@ export function activate(context: vscode.ExtensionContext) {
     // Initialize managers
     connectionManager = new ConnectionManager(context);
     mysqlClient = new MySQLClient();
-    connectionDialog = new ConnectionDialog(context, connectionManager, mysqlClient);
+    tokenManager = new TokenManager(context);
+    connectionDialog = new ConnectionDialog(context, connectionManager, mysqlClient, tokenManager);
+    databaseDialog = new DatabaseDialog(context, mysqlClient);
     metadataProvider = new MetadataProvider(mysqlClient);
     queryRunner = new QueryRunner(mysqlClient);
     resultsPanel = new ResultsPanel(context);
@@ -115,6 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         treeView,
         resultsPanel,
+        databaseDialog,
         logger
     );
 
@@ -128,11 +135,32 @@ async function handleConnect(node?: ConnectionNode) {
         if (node) {
             // Connect to existing connection
             const connection = node.connection;
-            const credentials = await connectionManager.getCredentials(connection.id);
+            let credentials = await connectionManager.getCredentials(connection.id);
 
-            if (!credentials || (!credentials.password && !credentials.azureToken)) {
-                vscode.window.showErrorMessage('No credentials found for this connection. Please edit the connection to add credentials.');
-                return;
+            // Handle Azure AD authentication
+            if (connection.authenticationType === 'AzureMFAAndUser') {
+                // Try to get existing token or authenticate
+                let token = await tokenManager.getAccessToken(connection.id);
+
+                if (!token) {
+                    // No valid token, need to authenticate
+                    vscode.window.showInformationMessage('Azure AD authentication required');
+                    token = await tokenManager.authenticateAndStoreToken(connection.id);
+
+                    if (!token) {
+                        vscode.window.showErrorMessage('Azure AD authentication failed or was cancelled');
+                        return;
+                    }
+                }
+
+                // Use token as credential
+                credentials = { azureToken: token };
+            } else {
+                // SQL Login - require password
+                if (!credentials || !credentials.password) {
+                    vscode.window.showErrorMessage('No password found for this connection. Please edit the connection to add a password.');
+                    return;
+                }
             }
 
             await vscode.window.withProgress({
@@ -140,7 +168,7 @@ async function handleConnect(node?: ConnectionNode) {
                 title: `Connecting to ${connection.name}...`,
                 cancellable: false
             }, async () => {
-                await mysqlClient.connect(connection, credentials);
+                await mysqlClient.connect(connection, credentials!);
                 treeDataProvider.setConnectionConnected(connection.id, true);
             });
 
@@ -271,7 +299,32 @@ async function handleNewQuery(node: ConnectionNode) {
 }
 
 async function handleCreateDatabase(node: ConnectionNode) {
-    vscode.window.showInformationMessage('Create database dialog not yet implemented. Coming in Phase 7!');
+    try {
+        // Ensure connection is connected
+        if (!treeDataProvider.isConnectionConnected(node.connection.id)) {
+            const connect = await vscode.window.showWarningMessage(
+                'Connection is not active. Would you like to connect first?',
+                'Connect',
+                'Cancel'
+            );
+
+            if (connect === 'Connect') {
+                await handleConnect(node);
+            } else {
+                return;
+            }
+        }
+
+        // Show database creation dialog
+        await databaseDialog.show(node.connection.id, () => {
+            // Refresh tree view after database is created
+            treeDataProvider.refresh(node);
+            vscode.window.showInformationMessage('Database created successfully!');
+        });
+    } catch (error) {
+        logger.error('Failed to show create database dialog', error as Error);
+        vscode.window.showErrorMessage(`Failed to show create database dialog: ${(error as Error).message}`);
+    }
 }
 
 async function handleDropDatabase(node: any) {

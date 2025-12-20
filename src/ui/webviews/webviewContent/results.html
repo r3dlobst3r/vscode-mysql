@@ -239,7 +239,7 @@
                 <div class="stats" id="stats"></div>
             </div>
             <div class="toolbar-right">
-                <button id="export-btn" title="Export results (coming in Phase 6)">Export</button>
+                <button id="export-btn" title="Export current result set to CSV, JSON, Excel, or XML">Export</button>
                 <button id="refresh-btn" class="primary" title="Re-run query">Refresh</button>
             </div>
         </div>
@@ -459,7 +459,7 @@
 
         // Button handlers
         document.getElementById('export-btn').addEventListener('click', () => {
-            vscode.postMessage({ command: 'export' });
+            vscode.postMessage({ command: 'export', tabIndex: currentTab });
         });
 
         document.getElementById('refresh-btn').addEventListener('click', () => {

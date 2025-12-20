@@ -10,7 +10,7 @@ This directory contains CI/CD workflows for the MySQL VS Code extension.
 - Pull requests to `main` branch
 
 **What it does:**
-- Tests on Node.js 18.x and 20.x
+- Tests on Node.js 20.x
 - Runs linter (ESLint)
 - Compiles TypeScript
 - Builds VSIX package

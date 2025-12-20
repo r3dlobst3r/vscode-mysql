@@ -11,7 +11,8 @@
   },
   "license": "MIT",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=20.0.0"
   },
   "categories": [
     "Programming Languages",
@@ -302,18 +303,18 @@
     "vsce:package": "vsce package"
   },
   "dependencies": {
-    "mysql2": "^3.6.0",
-    "@azure/msal-node": "^2.5.0",
-    "@azure/arm-mysql-flexible": "^3.0.0",
-    "@azure/identity": "^4.0.0",
+    "@azure/arm-mysql-flexible": "^3.1.0",
+    "@azure/identity": "^4.13.0",
+    "@azure/msal-node": "^2.16.3",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "exceljs": "^4.3.0",
-    "xml2js": "^0.6.0",
-    "sql-formatter": "^12.2.0"
+    "exceljs": "^4.4.0",
+    "mysql2": "^3.6.0",
+    "sql-formatter": "^12.2.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",

@@ -105,8 +105,8 @@ The connection is now saved and will appear in the MySQL explorer!
 - `MySQL: Refresh` - Refresh the connection tree
 - `MySQL: Execute Query` (Ctrl+Shift+E) - Execute SQL query and display results
 - `MySQL: New Query` - Create a new SQL file
-- `MySQL: Create Database` - Create a new database (coming in Phase 7)
-- `MySQL: Export Results` - Export query results (coming in Phase 6)
+- `MySQL: Create Database` - Create a new database with charset and collation selection
+- `MySQL: Export Results` - Export query results to CSV, JSON, Excel, or XML
 - `MySQL: Deploy to Azure` - Deploy MySQL to Azure
 - `MySQL: Select Top 1000 Rows` - Generate SELECT query for table data
 - `MySQL: View Table Structure` - Display table column information
@@ -125,9 +125,34 @@ The extension supports multiple SSL modes:
 - **Verify CA**: Verify server certificate against CA
 - **Verify Identity**: Full certificate verification including hostname
 
+## Azure AD Authentication
+
+The extension supports Azure Active Directory authentication for Azure MySQL Flexible Server:
+
+### Authentication Types
+
+- **SQL Login**: Traditional username/password authentication
+- **Azure MFA and User**: Azure AD authentication with Multi-Factor Authentication support
+
+### How Azure AD Authentication Works
+
+1. Select "Azure MFA and User" as the authentication type in the connection dialog
+2. When connecting, you'll be prompted to authenticate via device code flow
+3. A browser window will open where you sign in with your Microsoft account
+4. After successful authentication, the access token is securely stored
+5. Tokens are automatically refreshed before expiration
+6. Azure AD authentication requires SSL (automatically configured)
+
+### Requirements for Azure AD
+
+- Azure MySQL Flexible Server instance
+- Azure AD account with appropriate permissions
+- SSL must be enabled (required by Azure MySQL)
+
 ## Requirements
 
 - Visual Studio Code 1.85.0 or higher
+- Node.js 20.0.0 or higher (for development)
 - MySQL 5.7, 8.0, or MariaDB server
 
 ## Development Status
@@ -135,12 +160,12 @@ The extension supports multiple SSL modes:
 This extension is currently in active development. The following phases are complete or planned:
 
 - **Phase 1**: ✅ Complete - Project foundation, connection management, tree view
-- **Phase 2**: 🚧 Planned - Azure AD authentication
+- **Phase 2**: ✅ Complete - Azure AD authentication with MFA support
 - **Phase 3**: ✅ Complete - Connection dialog webview
 - **Phase 4**: ✅ Complete - Database object explorer
 - **Phase 5**: ✅ Complete - Query execution and results display
-- **Phase 6**: 🚧 Planned - Export functionality
-- **Phase 7**: 🚧 Planned - Create database dialog
+- **Phase 6**: ✅ Complete - Export functionality (CSV, JSON, Excel, XML)
+- **Phase 7**: ✅ Complete - Create database dialog with charset/collation
 - **Phase 8-9**: 🚧 Planned - Azure firewall and deployment
 - **Phase 10**: 🚧 Planned - SQL language features
 - **Phase 11**: 🚧 Planned - Settings and configuration
@@ -150,7 +175,7 @@ This extension is currently in active development. The following phases are comp
 ## Building from Source
 
 ### Prerequisites
-- Node.js 18.x or 20.x
+- Node.js 20.x or higher
 - npm
 
 ### Build Steps
@@ -176,9 +201,9 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 ## Known Limitations
 
-- Export functionality not yet implemented (placeholder in results panel)
-- Azure AD authentication not yet available
 - Table data editing not yet available
+- Database drop functionality not yet available
+- Azure firewall rule management not yet available
 
 ## Support
 

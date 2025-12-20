@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { ConnectionManager, MySQLConnection, ConnectionCredentials } from '../../connectionManager';
 import { MySQLClient } from '../../mysqlClient';
+import { TokenManager } from '../../auth/tokenManager';
 import { logger } from '../../utils/logger';
 import { AuthenticationType, SSLMode, DEFAULT_PORT, DEFAULT_CONNECT_TIMEOUT } from '../../utils/constants';
 
@@ -14,7 +15,8 @@ export class ConnectionDialog {
     constructor(
         private context: vscode.ExtensionContext,
         private connectionManager: ConnectionManager,
-        private mysqlClient: MySQLClient
+        private mysqlClient: MySQLClient,
+        private tokenManager: TokenManager
     ) {}
 
     /**
@@ -122,7 +124,32 @@ export class ConnectionDialog {
     private async handleTestConnection(formData: any): Promise<void> {
         try {
             const connection = this.formDataToConnection(formData);
-            const credentials = this.formDataToCredentials(formData);
+            let credentials = this.formDataToCredentials(formData);
+
+            // Handle Azure AD authentication for testing
+            if (connection.authenticationType === AuthenticationType.AzureMFA) {
+                // Authenticate using device code flow
+                vscode.window.showInformationMessage('Azure AD authentication required for connection test');
+
+                // For testing, we need a temporary connection ID
+                const tempConnectionId = `temp-${Date.now()}`;
+                const token = await this.tokenManager.authenticateAndStoreToken(tempConnectionId);
+
+                if (!token) {
+                    this.panel?.webview.postMessage({
+                        command: 'testResult',
+                        success: false,
+                        error: 'Azure AD authentication failed or was cancelled'
+                    });
+                    return;
+                }
+
+                // Use token for test
+                credentials = { azureToken: token };
+
+                // Clean up temp token
+                await this.tokenManager.clearToken(tempConnectionId);
+            }
 
             // Test the connection
             await this.mysqlClient.testConnection(connection, credentials);
