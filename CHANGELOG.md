@@ -22,6 +22,27 @@ All notable changes to the "MySQL for Visual Studio Code" extension will be docu
   - Proper error handling for authentication failures
 - SSL enforcement for Azure AD connections (required by Azure MySQL)
 
+### Added - Phase 10 (SQL Language Features)
+- IntelliSense autocomplete for SQL code:
+  - 60+ MySQL keywords (SELECT, FROM, WHERE, INSERT, CREATE, etc.)
+  - 30+ data types (INT, VARCHAR, DATETIME, JSON, etc.)
+  - 50+ built-in functions (CONCAT, NOW, COUNT, AVG, etc.)
+  - Dynamic table and column suggestions from active connection
+  - Snippet support for functions with parameter placeholders
+- Hover provider for metadata display:
+  - Table information (engine, row count, column count, comments)
+  - Column information (type, nullable, key, default value, extra attributes)
+  - Query MySQL system tables for real-time information
+- SQL code formatting using sql-formatter:
+  - Document and range formatting support
+  - Configurable keyword case (upper, lower, capitalize)
+  - Configurable identifier case (upper, lower, capitalize, preserve)
+  - Optional comment stripping
+  - Reindent support
+  - MySQL-specific syntax support
+- Language features automatically enabled for .sql files
+- Connection-aware IntelliSense (updates when connecting to servers)
+
 ### Added - Phase 7 (Create Database Dialog)
 - Rich webview-based database creation dialog
 - Real-time character set selection with descriptions
@@ -135,6 +156,8 @@ All notable changes to the "MySQL for Visual Studio Code" extension will be docu
 - Phase 5: ✅ COMPLETED - Query execution with rich results display
 - Phase 6: ✅ COMPLETED - Export to CSV, JSON, Excel, XML
 - Phase 7: ✅ COMPLETED - Create database dialog with charset/collation
+- Phase 10: ✅ COMPLETED - SQL IntelliSense and formatting
 - Phase 8: Azure firewall rule management
-- Phase 10: SQL IntelliSense and formatting
+- Phase 9: Azure deployment wizard integration
 - Phase 11: Additional configuration options
+- Phase 12: Comprehensive testing

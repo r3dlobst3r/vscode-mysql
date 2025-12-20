@@ -11,6 +11,9 @@ import { ResultsPanel } from './ui/webviews/resultsPanel';
 import { getQueryFromEditor } from './queries/queryParser';
 import { TokenManager } from './auth/tokenManager';
 import { logger } from './utils/logger';
+import { MySQLCompletionProvider } from './language/completionProvider';
+import { MySQLHoverProvider } from './language/hoverProvider';
+import { MySQLFormattingProvider } from './language/formattingProvider';
 import {
     COMMAND_CONNECT,
     COMMAND_DISCONNECT,
@@ -37,6 +40,9 @@ let metadataProvider: MetadataProvider;
 let queryRunner: QueryRunner;
 let resultsPanel: ResultsPanel;
 let tokenManager: TokenManager;
+let completionProvider: MySQLCompletionProvider;
+let hoverProvider: MySQLHoverProvider;
+let formattingProvider: MySQLFormattingProvider;
 
 export function activate(context: vscode.ExtensionContext) {
     logger.info('MySQL extension is now active');
@@ -60,6 +66,19 @@ export function activate(context: vscode.ExtensionContext) {
         treeDataProvider: treeDataProvider,
         showCollapseAll: true
     });
+
+    // Initialize language features
+    completionProvider = new MySQLCompletionProvider();
+    hoverProvider = new MySQLHoverProvider();
+    formattingProvider = new MySQLFormattingProvider();
+
+    // Register language features for SQL files
+    context.subscriptions.push(
+        vscode.languages.registerCompletionItemProvider('sql', completionProvider, '.', '`'),
+        vscode.languages.registerHoverProvider('sql', hoverProvider),
+        vscode.languages.registerDocumentFormattingEditProvider('sql', formattingProvider),
+        vscode.languages.registerDocumentRangeFormattingEditProvider('sql', formattingProvider)
+    );
 
     // Register commands
     context.subscriptions.push(
@@ -170,6 +189,10 @@ async function handleConnect(node?: ConnectionNode) {
             }, async () => {
                 await mysqlClient.connect(connection, credentials!);
                 treeDataProvider.setConnectionConnected(connection.id, true);
+
+                // Update language providers with active connection
+                completionProvider.setMySQLClient(mysqlClient, connection.id);
+                hoverProvider.setMySQLClient(mysqlClient, connection.id);
             });
 
             vscode.window.showInformationMessage(`Connected to ${connection.name}`);

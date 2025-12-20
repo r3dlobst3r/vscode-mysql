@@ -4,7 +4,7 @@ MySQL database management extension for Visual Studio Code with complete feature
 
 ## Features
 
-### ✅ Implemented (Phase 1, 3 & 4)
+### ✅ Implemented Features
 - **Connection Management**: Save and manage MySQL connections with secure password storage
 - **Connection Dialog** (Phase 3): Rich webview-based UI for creating and editing connections
 - **Connection Testing**: Test connections before saving
@@ -14,19 +14,22 @@ MySQL database management extension for Visual Studio Code with complete feature
 - **MySQL Client**: Connect to MySQL 5.7, 8.0, and MariaDB
 - **SSL Support**: Configure SSL connections (disable, require, verify_ca, verify_identity) with certificate browsing
 - **Advanced Settings**: Connection timeout, client flags, SQL mode
+- **Query Execution** (Phase 5): Execute SQL queries with Ctrl+Shift+E keyboard shortcut
+- **Results Display** (Phase 5): Rich webview table view with sorting and multiple result sets
+- **Export Functionality** (Phase 6): Export query results to CSV, JSON, Excel (.xlsx), or XML
+- **Create Database** (Phase 7): Create new databases with charset and collation selection
+- **Azure AD Authentication** (Phase 2): Azure MFA and User authentication with device code flow
+- **SQL IntelliSense** (Phase 10): Autocomplete for keywords, data types, functions, tables, and columns
+- **SQL Formatting** (Phase 10): Format SQL code with configurable keyword case, identifier case, and more
+- **Hover Information** (Phase 10): View table and column metadata on hover
 - **Syntax Highlighting**: MySQL-specific SQL syntax highlighting
 - **Code Snippets**: MySQL code snippets for common operations
 - **Azure Deployment**: Quick link to deploy Azure MySQL Flexible Server
 
 ### 🚧 Coming Soon
-- **Query Execution** (Phase 5): Execute SQL queries with Ctrl+Shift+E
-- **Results Display** (Phase 5): Rich table view with sorting, filtering, pagination
-- **Export Functionality** (Phase 6): Export to CSV, JSON, Excel, XML
-- **Create Database** (Phase 7): Create new databases with charset/collation selection
-- **Azure AD Authentication** (Phase 2): Azure MFA and User authentication
 - **Azure Firewall Rules** (Phase 8): Manage firewall rules for Azure MySQL
-- **SQL IntelliSense** (Phase 10): Code completion for keywords, tables, columns
-- **SQL Formatting** (Phase 10): Format SQL code with configurable options
+- **Azure Deployment Wizard** (Phase 9): Integrated deployment wizard for Azure MySQL
+- **Additional Settings** (Phase 11): More configuration options
 
 ## Installation
 
@@ -166,11 +169,11 @@ This extension is currently in active development. The following phases are comp
 - **Phase 5**: ✅ Complete - Query execution and results display
 - **Phase 6**: ✅ Complete - Export functionality (CSV, JSON, Excel, XML)
 - **Phase 7**: ✅ Complete - Create database dialog with charset/collation
-- **Phase 8-9**: 🚧 Planned - Azure firewall and deployment
-- **Phase 10**: 🚧 Planned - SQL language features
-- **Phase 11**: 🚧 Planned - Settings and configuration
-- **Phase 12**: 🚧 Planned - Testing and QA
-- **Phase 13**: 🚧 Planned - Final packaging
+- **Phase 10**: ✅ Complete - SQL language features (IntelliSense, formatting, hover)
+- **Phase 8-9**: 🚧 Planned - Azure firewall and deployment wizard
+- **Phase 11**: 🚧 Planned - Additional settings and configuration
+- **Phase 12**: 🚧 Planned - Comprehensive testing and QA
+- **Phase 13**: 🚧 Planned - Final packaging and polish
 
 ## Building from Source
 
