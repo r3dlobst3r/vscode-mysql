@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { QueryExecutionResult } from '../../queries/queryRunner';
+import { ExportManager } from '../../export/exportManager';
 import { logger } from '../../utils/logger';
 
 export class ResultsPanel {
@@ -9,8 +10,11 @@ export class ResultsPanel {
     private disposables: vscode.Disposable[] = [];
     private currentResults: QueryExecutionResult[] = [];
     private currentSql: string = '';
+    private exportManager: ExportManager;
 
-    constructor(private context: vscode.ExtensionContext) {}
+    constructor(private context: vscode.ExtensionContext) {
+        this.exportManager = new ExportManager();
+    }
 
     /**
      * Show query results in the panel
@@ -79,7 +83,7 @@ export class ResultsPanel {
                         break;
 
                     case 'export':
-                        vscode.window.showInformationMessage('Export functionality coming in Phase 6!');
+                        await this.handleExport(message.tabIndex);
                         break;
 
                     case 'refresh':
@@ -173,6 +177,37 @@ export class ResultsPanel {
         html = html.replace(/{{cspSource}}/g, cspSource);
 
         return html;
+    }
+
+    private async handleExport(tabIndex?: number): Promise<void> {
+        try {
+            // Determine which result to export
+            const index = tabIndex !== undefined ? tabIndex : 0;
+
+            if (index < 0 || index >= this.currentResults.length) {
+                vscode.window.showErrorMessage('Invalid result set selected for export.');
+                return;
+            }
+
+            const result = this.currentResults[index];
+
+            // Check if result has data
+            if (result.error) {
+                vscode.window.showErrorMessage('Cannot export result with errors.');
+                return;
+            }
+
+            if (!result.result || result.result.rows.length === 0) {
+                vscode.window.showWarningMessage('No data to export.');
+                return;
+            }
+
+            // Export using export manager
+            await this.exportManager.exportWithDialog(result.result);
+        } catch (error) {
+            logger.error('Export failed', error as Error);
+            vscode.window.showErrorMessage(`Export failed: ${(error as Error).message}`);
+        }
     }
 
     public dispose() {

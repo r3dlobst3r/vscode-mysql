@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src {{cspSource}} 'unsafe-inline'; script-src {{cspSource}} 'unsafe-inline';">
+    <title>Create Database</title>
+    <style>
+        body {
+            padding: 20px;
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            color: var(--vscode-foreground);
+            background-color: var(--vscode-editor-background);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .required {
+            color: var(--vscode-errorForeground);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--vscode-input-border);
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            font-family: var(--vscode-font-family);
+            font-size: var(--vscode-font-size);
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: -1px;
+        }
+
+        .description {
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: var(--vscode-font-family);
+        }
+
+        button.primary {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        button.primary:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        button.primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+        }
+
+        button.secondary:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .status-message {
+            padding: 12px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status-message.success {
+            background: var(--vscode-testing-iconPassed);
+            color: var(--vscode-editor-background);
+            display: block;
+        }
+
+        .status-message.error {
+            background: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+            color: var(--vscode-errorForeground);
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .loading.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create New Database</h2>
+
+        <div class="status-message" id="status-message"></div>
+
+        <div class="loading" id="loading">
+            <div>Loading available charsets and collations...</div>
+        </div>
+
+        <form id="database-form">
+            <div class="form-group">
+                <label for="database-name">Database Name <span class="required">*</span></label>
+                <input
+                    type="text"
+                    id="database-name"
+                    name="name"
+                    placeholder="my_database"
+                    required
+                    autofocus
+                />
+                <div class="description">Enter a valid MySQL database name (alphanumeric and underscores)</div>
+            </div>
+
+            <div class="form-group">
+                <label for="charset">Character Set</label>
+                <select id="charset" name="charset">
+                    <option value="">Loading...</option>
+                </select>
+                <div class="description">Character encoding for the database</div>
+            </div>
+
+            <div class="form-group">
+                <label for="collation">Collation</label>
+                <select id="collation" name="collation">
+                    <option value="">Select character set first...</option>
+                </select>
+                <div class="description">Sort order and comparison rules for the character set</div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="primary" id="create-btn" disabled>Create Database</button>
+                <button type="button" class="secondary" id="cancel-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const vscode = acquireVsCodeApi();
+
+        let availableCharsets = [];
+        let availableCollations = {};
+
+        // DOM elements
+        const form = document.getElementById('database-form');
+        const nameInput = document.getElementById('database-name');
+        const charsetSelect = document.getElementById('charset');
+        const collationSelect = document.getElementById('collation');
+        const createBtn = document.getElementById('create-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const statusMessage = document.getElementById('status-message');
+        const loading = document.getElementById('loading');
+
+        // Handle messages from extension
+        window.addEventListener('message', event => {
+            const message = event.data;
+
+            switch (message.command) {
+                case 'loadCharsets':
+                    loadCharsets(message.charsets, message.collations);
+                    break;
+                case 'createSuccess':
+                    showSuccess(message.message);
+                    break;
+                case 'createError':
+                    showError(message.message);
+                    break;
+            }
+        });
+
+        function loadCharsets(charsets, collations) {
+            availableCharsets = charsets;
+            availableCollations = collations;
+
+            loading.classList.remove('active');
+
+            // Populate charset dropdown
+            charsetSelect.innerHTML = '';
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Default (utf8mb4)';
+            charsetSelect.appendChild(defaultOption);
+
+            charsets.forEach(charset => {
+                const option = document.createElement('option');
+                option.value = charset.name;
+                option.textContent = `${charset.name} - ${charset.description}`;
+                charsetSelect.appendChild(option);
+            });
+
+            // Enable form
+            createBtn.disabled = false;
+        }
+
+        // Charset change handler
+        charsetSelect.addEventListener('change', () => {
+            const selectedCharset = charsetSelect.value;
+
+            collationSelect.innerHTML = '';
+
+            if (!selectedCharset) {
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Default';
+                collationSelect.appendChild(defaultOption);
+                return;
+            }
+
+            // Find collations for selected charset
+            const collations = availableCollations[selectedCharset] || [];
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = `Default (${collations[0] || ''})`;
+            collationSelect.appendChild(defaultOption);
+
+            collations.forEach(collation => {
+                const option = document.createElement('option');
+                option.value = collation;
+                option.textContent = collation;
+                collationSelect.appendChild(option);
+            });
+        });
+
+        // Form submit handler
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showError('Database name is required');
+                return;
+            }
+
+            // Validate database name
+            if (!/^[a-zA-Z0-9_]+$/.test(name)) {
+                showError('Database name must contain only letters, numbers, and underscores');
+                return;
+            }
+
+            const charset = charsetSelect.value || null;
+            const collation = collationSelect.value || null;
+
+            // Send create request
+            vscode.postMessage({
+                command: 'create',
+                name: name,
+                charset: charset,
+                collation: collation
+            });
+
+            // Disable button while creating
+            createBtn.disabled = true;
+            createBtn.textContent = 'Creating...';
+        });
+
+        // Cancel handler
+        cancelBtn.addEventListener('click', () => {
+            vscode.postMessage({ command: 'cancel' });
+        });
+
+        function showSuccess(message) {
+            statusMessage.className = 'status-message success';
+            statusMessage.textContent = message;
+            createBtn.disabled = false;
+            createBtn.textContent = 'Create Database';
+        }
+
+        function showError(message) {
+            statusMessage.className = 'status-message error';
+            statusMessage.textContent = message;
+            createBtn.disabled = false;
+            createBtn.textContent = 'Create Database';
+        }
+
+        // Request initial data
+        loading.classList.add('active');
+        vscode.postMessage({ command: 'ready' });
+    </script>
+</body>
+</html>

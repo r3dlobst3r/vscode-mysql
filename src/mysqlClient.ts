@@ -27,16 +27,24 @@ export class MySQLClient {
         try {
             logger.info(`Connecting to MySQL server: ${connection.host}:${connection.port}`);
 
+            // For Azure AD authentication, use the token as password
+            // Azure MySQL Flexible Server validates the token server-side
+            const password = credentials.azureToken || credentials.password;
+
+            if (!password) {
+                throw new Error('No password or Azure AD token provided');
+            }
+
             const config: mysql.ConnectionOptions = {
                 host: connection.host,
                 port: connection.port || 3306,
                 user: connection.username,
-                password: credentials.password || credentials.azureToken,
+                password: password,
                 database: connection.database,
                 connectTimeout: (connection.connectTimeout || DEFAULT_CONNECT_TIMEOUT) * 1000, // Convert to milliseconds
             };
 
-            // Configure SSL
+            // Configure SSL (required for Azure AD authentication)
             if (connection.ssl && connection.ssl.mode !== SSLMode.Disable) {
                 switch (connection.ssl.mode) {
                     case SSLMode.Require:
@@ -190,16 +198,23 @@ export class MySQLClient {
         try {
             logger.info(`Testing connection to: ${connection.host}:${connection.port}`);
 
+            // For Azure AD authentication, use the token as password
+            const password = credentials.azureToken || credentials.password;
+
+            if (!password) {
+                throw new Error('No password or Azure AD token provided');
+            }
+
             const config: mysql.ConnectionOptions = {
                 host: connection.host,
                 port: connection.port || 3306,
                 user: connection.username,
-                password: credentials.password || credentials.azureToken,
+                password: password,
                 database: connection.database,
                 connectTimeout: (connection.connectTimeout || DEFAULT_CONNECT_TIMEOUT) * 1000,
             };
 
-            // Configure SSL
+            // Configure SSL (required for Azure AD authentication)
             if (connection.ssl && connection.ssl.mode !== SSLMode.Disable) {
                 switch (connection.ssl.mode) {
                     case SSLMode.Require:

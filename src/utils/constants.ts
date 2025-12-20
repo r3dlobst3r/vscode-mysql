@@ -30,6 +30,13 @@ export const CONFIG_FORMAT_IDENTIFIER_CASE = 'mysql.format.identifierCase';
 export const CONFIG_FORMAT_STRIP_COMMENTS = 'mysql.format.stripComments';
 export const CONFIG_FORMAT_REINDENT = 'mysql.format.reindent';
 export const CONFIG_LOG_DEBUG_INFO = 'mysql.logDebugInfo';
+export const CONFIG_AUTO_CONNECT_ON_STARTUP = 'mysql.autoConnectOnStartup';
+export const CONFIG_SHOW_SYSTEM_DATABASES = 'mysql.showSystemDatabases';
+export const CONFIG_INTELLISENSE_ENABLED = 'mysql.intelliSense.enabled';
+export const CONFIG_INTELLISENSE_INCLUDE_TABLES = 'mysql.intelliSense.includeTables';
+export const CONFIG_CONNECTION_POOL_SIZE = 'mysql.connectionPool.size';
+export const CONFIG_RESULTS_ROWS_PER_PAGE = 'mysql.results.rowsPerPage';
+export const CONFIG_RESULTS_MAX_COLUMN_WIDTH = 'mysql.results.maxColumnWidth';
 
 // Tree view context values
 export const CONTEXT_CONNECTION_DISCONNECTED = 'connection-disconnected';

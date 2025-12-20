@@ -11,7 +11,8 @@
   },
   "license": "MIT",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.85.0",
+    "node": ">=20.0.0"
   },
   "categories": [
     "Programming Languages",
@@ -50,8 +51,8 @@
     "commands": [
       {
         "command": "mysql.connect",
-        "title": "MySQL: New Connection",
-        "icon": "$(add)"
+        "title": "MySQL: Connect to Server",
+        "icon": "$(plug)"
       },
       {
         "command": "mysql.disconnect",
@@ -77,7 +78,8 @@
       },
       {
         "command": "mysql.newQuery",
-        "title": "MySQL: New Query"
+        "title": "MySQL: New Query",
+        "icon": "$(new-file)"
       },
       {
         "command": "mysql.createDatabase",
@@ -120,6 +122,11 @@
     "menus": {
       "view/title": [
         {
+          "command": "mysql.newQuery",
+          "when": "view == mysqlConnections",
+          "group": "navigation"
+        },
+        {
           "command": "mysql.connect",
           "when": "view == mysqlConnections",
           "group": "navigation"
@@ -135,6 +142,10 @@
           "command": "mysql.connect",
           "when": "view == mysqlConnections && viewItem == connection-disconnected",
           "group": "inline"
+        },
+        {
+          "command": "mysql.connect",
+          "when": "view == mysqlConnections && viewItem == connection-disconnected"
         },
         {
           "command": "mysql.disconnect",
@@ -183,7 +194,23 @@
         {
           "command": "mysql.executeQuery",
           "when": "editorLangId == sql",
-          "group": "navigation"
+          "group": "navigation@1"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "mysql.executeQuery",
+          "when": "editorLangId == sql",
+          "group": "mysql@1"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "mysql.executeQuery",
+          "when": "editorLangId == sql"
+        },
+        {
+          "command": "mysql.newQuery"
         }
       ]
     },
@@ -285,6 +312,47 @@
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging"
+        },
+        "mysql.autoConnectOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically connect to the default connection on startup"
+        },
+        "mysql.showSystemDatabases": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show system databases (information_schema, performance_schema, sys, mysql)"
+        },
+        "mysql.intelliSense.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable IntelliSense for SQL files"
+        },
+        "mysql.intelliSense.includeTables": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include table and column suggestions in IntelliSense"
+        },
+        "mysql.connectionPool.size": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum number of connections in the connection pool",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "mysql.results.rowsPerPage": {
+          "type": "number",
+          "default": 50,
+          "description": "Number of rows to display per page in query results",
+          "minimum": 10,
+          "maximum": 1000
+        },
+        "mysql.results.maxColumnWidth": {
+          "type": "number",
+          "default": 300,
+          "description": "Maximum column width in pixels in query results",
+          "minimum": 50,
+          "maximum": 1000
         }
       }
     }
@@ -302,18 +370,18 @@
     "vsce:package": "vsce package"
   },
   "dependencies": {
-    "mysql2": "^3.6.0",
-    "@azure/msal-node": "^2.5.0",
-    "@azure/arm-mysql-flexible": "^3.0.0",
-    "@azure/identity": "^4.0.0",
+    "@azure/arm-mysql-flexible": "^3.1.0",
+    "@azure/identity": "^4.13.0",
+    "@azure/msal-node": "^2.16.3",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "exceljs": "^4.3.0",
-    "xml2js": "^0.6.0",
-    "sql-formatter": "^12.2.0"
+    "exceljs": "^4.4.0",
+    "mysql2": "^3.6.0",
+    "sql-formatter": "^12.2.4",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
     "@types/xml2js": "^0.4.14",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
