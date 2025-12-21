@@ -1,4 +1,4 @@
-export const EXTENSION_ID = 'vscode-mysql';
+export const EXTENSION_ID = 'mysql-manager';
 export const EXTENSION_NAME = 'MySQL';
 export const OUTPUT_CHANNEL_NAME = 'MySQL';
 
