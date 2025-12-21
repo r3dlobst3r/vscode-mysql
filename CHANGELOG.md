@@ -2,6 +2,82 @@
 
 All notable changes to the "MySQL for Visual Studio Code" extension will be documented in this file.
 
+## [1.1.0] - 2025-12-21
+
+### Added - Visual Database Object Creation
+- **Visual Table Creation Dialog**: Create tables without writing SQL
+  - Interactive grid-based column editor
+  - Support for all major MySQL data types (INT, VARCHAR, TEXT, DATETIME, DECIMAL, BOOLEAN, BIGINT, DATE, TIMESTAMP, JSON)
+  - Column configuration: name, type, length, nullable, primary key, auto-increment
+  - Default first column: `id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY`
+  - Table name validation (alphanumeric and underscores)
+  - Automatic CREATE TABLE statement generation and execution
+  - Context menu integration: right-click database → Create Table
+  - Inline button on database nodes for quick access
+
+- **Enhanced Database Creation**: Fixed command to work from anywhere
+  - Can now be called from command palette, toolbar, or context menu
+  - Automatically selects connection if only one is connected
+  - Prompts for connection selection if multiple are connected
+  - Improved error handling and user feedback
+
+- **Visual View Creation Dialog**: Create views without writing SQL
+  - Define view name and SELECT statement
+  - Input validation ensures proper syntax
+  - Automatic CREATE VIEW statement generation
+  - Context menu integration: right-click database → Create View
+
+- **Visual Stored Procedure Creation Dialog**: Create stored procedures with visual editor
+  - Define procedure name and parameters
+  - IN/OUT parameter support with examples
+  - SQL body editor with syntax hints
+  - Automatic DELIMITER handling
+  - Context menu integration: right-click database → Create Stored Procedure
+
+- **Visual Function Creation Dialog**: Create functions with visual editor
+  - Define function name, parameters, and return type
+  - DETERMINISTIC/NOT DETERMINISTIC toggle
+  - SQL body editor with RETURN statement validation
+  - Support for all MySQL data types as return values
+  - Context menu integration: right-click database → Create Function
+
+- **Set Active Database**: Select default database for queries
+  - Right-click any database → Set as Active Database
+  - Stores database preference per connection in workspace settings
+  - Helps avoid "No database selected" errors when creating tables
+
+### Added - Cell Selection & Copy in Results
+- **Interactive Cell Selection**: Click and drag to select cells in query results
+  - Single cell selection: Click on a cell
+  - Range selection: Click and drag across multiple cells
+  - Extended selection: Shift+Click to select range
+  - Multiple selection: Ctrl/Cmd+Click to add individual cells
+  - Select all: Ctrl/Cmd+A or right-click → Select All
+- **Copy in Multiple Formats**:
+  - Copy as plain text (Ctrl/Cmd+C or right-click → Copy)
+  - Copy as CSV with proper escaping (right-click → Copy as CSV)
+  - Copy as JSON with structured data (right-click → Copy as JSON)
+- **Visual Selection Feedback**:
+  - Selected cells highlighted with VS Code theme colors
+  - Selection counter at bottom showing number of cells selected
+  - Copy confirmation messages
+- **Context Menu**: Right-click on cells for copy options and selection controls
+- **Keyboard Shortcuts**:
+  - Ctrl/Cmd+C: Copy selected cells as text
+  - Ctrl/Cmd+A: Select all cells
+  - Escape: Clear selection and close context menu
+
+### Improved - User Experience
+- Better error messages for database and table operations
+- Automatic tree view refresh after creating databases, tables, views, procedures, and functions
+- Support for creating database objects from command palette or database context menus
+- Visual indicators and inline buttons for common operations
+- Cell selection replaces text selection for better data manipulation
+
+### Fixed
+- Right-click context menu now preserves cell selection in query results
+- Fixed issue where right-clicking would clear selected cells
+
 ## [1.0.0] - 2025-12-18
 
 ### Added - Phase 2 (Azure AD Authentication)

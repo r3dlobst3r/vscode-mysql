@@ -171,9 +171,16 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            cursor: cell;
+            user-select: none;
         }
 
-        tr:hover {
+        td.selected {
+            background: var(--vscode-list-activeSelectionBackground) !important;
+            color: var(--vscode-list-activeSelectionForeground);
+        }
+
+        tr:hover td:not(.selected) {
             background: var(--vscode-list-hoverBackground);
         }
 
@@ -230,6 +237,45 @@
             height: 100%;
             color: var(--vscode-descriptionForeground);
         }
+
+        .context-menu {
+            position: fixed;
+            background: var(--vscode-menu-background);
+            border: 1px solid var(--vscode-menu-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 180px;
+            padding: 4px 0;
+            display: none;
+        }
+
+        .context-menu-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-menu-item:hover {
+            background: var(--vscode-menu-selectionBackground);
+            color: var(--vscode-menu-selectionForeground);
+        }
+
+        .context-menu-separator {
+            height: 1px;
+            background: var(--vscode-menu-separatorBackground);
+            margin: 4px 0;
+        }
+
+        .selection-info {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            padding: 4px 12px;
+            background: var(--vscode-editor-background);
+            border-top: 1px solid var(--border-color);
+        }
     </style>
 </head>
 <body>
@@ -252,12 +298,28 @@
                 <div>No results to display</div>
             </div>
         </div>
+
+        <div class="selection-info" id="selection-info" style="display: none;">
+            <span id="selection-text"></span>
+        </div>
+    </div>
+
+    <div class="context-menu" id="context-menu">
+        <div class="context-menu-item" data-action="copy">📋 Copy</div>
+        <div class="context-menu-item" data-action="copy-csv">📄 Copy as CSV</div>
+        <div class="context-menu-item" data-action="copy-json">{ } Copy as JSON</div>
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="select-all">⬜ Select All</div>
+        <div class="context-menu-item" data-action="clear-selection">✖ Clear Selection</div>
     </div>
 
     <script>
         const vscode = acquireVsCodeApi();
         let currentResults = [];
         let currentTab = 0;
+        let selectedCells = new Set();
+        let isSelecting = false;
+        let selectionStart = null;
 
         // Handle messages from extension
         window.addEventListener('message', event => {
@@ -378,6 +440,12 @@
             resultSet.appendChild(tableContainer);
 
             contentContainer.appendChild(resultSet);
+
+            // Attach cell selection handlers
+            attachCellSelectionHandlers(table);
+
+            // Clear any previous selection
+            clearSelection();
         }
 
         function createTable(queryResult) {
@@ -456,6 +524,341 @@
             div.textContent = text;
             return div.innerHTML;
         }
+
+        // Cell selection functions
+        function getCellKey(rowIndex, colIndex) {
+            return `${rowIndex}-${colIndex}`;
+        }
+
+        function attachCellSelectionHandlers(table) {
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+
+            const cells = tbody.querySelectorAll('td');
+
+            cells.forEach((cell, index) => {
+                const row = cell.parentElement;
+                const rowIndex = Array.from(tbody.children).indexOf(row);
+                const colIndex = Array.from(row.children).indexOf(cell);
+                const cellKey = getCellKey(rowIndex, colIndex);
+
+                cell.dataset.rowIndex = rowIndex;
+                cell.dataset.colIndex = colIndex;
+                cell.dataset.cellKey = cellKey;
+
+                // Mouse down - start selection
+                cell.addEventListener('mousedown', (e) => {
+                    // Ignore right-clicks (button 2) - let contextmenu handle it
+                    if (e.button === 2) {
+                        return;
+                    }
+
+                    e.preventDefault();
+                    isSelecting = true;
+                    selectionStart = { rowIndex, colIndex };
+
+                    if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        clearSelection();
+                    }
+
+                    if (e.shiftKey && selectedCells.size > 0) {
+                        // Range selection
+                        selectRange(selectionStart.rowIndex, selectionStart.colIndex, rowIndex, colIndex);
+                    } else {
+                        toggleCellSelection(cell, cellKey);
+                    }
+
+                    updateSelectionInfo();
+                });
+
+                // Mouse enter - extend selection
+                cell.addEventListener('mouseenter', () => {
+                    if (isSelecting && selectionStart) {
+                        selectRange(selectionStart.rowIndex, selectionStart.colIndex, rowIndex, colIndex);
+                        updateSelectionInfo();
+                    }
+                });
+
+                // Right click - show context menu
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+
+                    // If this cell is not part of the current selection, select only this cell
+                    // Otherwise, keep the current selection
+                    if (!selectedCells.has(cellKey)) {
+                        clearSelection();
+                        selectedCells.add(cellKey);
+                        cell.classList.add('selected');
+                        updateSelectionInfo();
+                    }
+
+                    showContextMenu(e.clientX, e.clientY);
+                });
+            });
+        }
+
+        function toggleCellSelection(cell, cellKey) {
+            if (selectedCells.has(cellKey)) {
+                selectedCells.delete(cellKey);
+                cell.classList.remove('selected');
+            } else {
+                selectedCells.add(cellKey);
+                cell.classList.add('selected');
+            }
+        }
+
+        function selectRange(startRow, startCol, endRow, endCol) {
+            const minRow = Math.min(startRow, endRow);
+            const maxRow = Math.max(startRow, endRow);
+            const minCol = Math.min(startCol, endCol);
+            const maxCol = Math.max(startCol, endCol);
+
+            clearSelection();
+
+            const table = document.querySelector('table');
+            const tbody = table.querySelector('tbody');
+            const rows = tbody.querySelectorAll('tr');
+
+            for (let r = minRow; r <= maxRow; r++) {
+                const row = rows[r];
+                if (!row) continue;
+
+                const cells = row.querySelectorAll('td');
+                for (let c = minCol; c <= maxCol; c++) {
+                    const cell = cells[c];
+                    if (!cell) continue;
+
+                    const cellKey = getCellKey(r, c);
+                    selectedCells.add(cellKey);
+                    cell.classList.add('selected');
+                }
+            }
+        }
+
+        function clearSelection() {
+            selectedCells.clear();
+            document.querySelectorAll('td.selected').forEach(cell => {
+                cell.classList.remove('selected');
+            });
+            updateSelectionInfo();
+        }
+
+        function selectAll() {
+            const table = document.querySelector('table');
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            const cells = tbody.querySelectorAll('td');
+
+            clearSelection();
+            cells.forEach(cell => {
+                const cellKey = cell.dataset.cellKey;
+                selectedCells.add(cellKey);
+                cell.classList.add('selected');
+            });
+
+            updateSelectionInfo();
+        }
+
+        function updateSelectionInfo() {
+            const infoElement = document.getElementById('selection-info');
+            const textElement = document.getElementById('selection-text');
+
+            if (selectedCells.size === 0) {
+                infoElement.style.display = 'none';
+            } else {
+                infoElement.style.display = 'block';
+                textElement.textContent = `${selectedCells.size} cell(s) selected`;
+            }
+        }
+
+        function getSelectedData() {
+            if (selectedCells.size === 0) return [];
+
+            const table = document.querySelector('table');
+            const tbody = table.querySelector('tbody');
+            const result = currentResults[currentTab].result;
+
+            const data = [];
+            const sortedCells = Array.from(selectedCells).sort();
+
+            sortedCells.forEach(cellKey => {
+                const [rowIndex, colIndex] = cellKey.split('-').map(Number);
+                const row = result.rows[rowIndex];
+                const field = result.fields[colIndex];
+
+                if (row && field) {
+                    const value = row[field.name];
+                    data.push({
+                        rowIndex,
+                        colIndex,
+                        fieldName: field.name,
+                        value: value === null ? 'NULL' : (typeof value === 'object' ? JSON.stringify(value) : String(value))
+                    });
+                }
+            });
+
+            return data;
+        }
+
+        function copyAsText() {
+            const data = getSelectedData();
+            if (data.length === 0) return;
+
+            const text = data.map(d => d.value).join('\t');
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyFeedback('Copied to clipboard');
+            });
+        }
+
+        function copyAsCSV() {
+            const data = getSelectedData();
+            if (data.length === 0) return;
+
+            // Group by rows
+            const rows = new Map();
+            data.forEach(d => {
+                if (!rows.has(d.rowIndex)) {
+                    rows.set(d.rowIndex, []);
+                }
+                rows.get(d.rowIndex).push(d);
+            });
+
+            // Get unique column names
+            const columns = [...new Set(data.map(d => d.fieldName))];
+
+            // Build CSV
+            let csv = columns.join(',') + '\n';
+            rows.forEach(rowData => {
+                const values = columns.map(col => {
+                    const cell = rowData.find(d => d.fieldName === col);
+                    const value = cell ? cell.value : '';
+                    // Escape quotes and wrap in quotes if contains comma or quote
+                    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                        return '"' + value.replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                });
+                csv += values.join(',') + '\n';
+            });
+
+            navigator.clipboard.writeText(csv).then(() => {
+                showCopyFeedback('Copied as CSV');
+            });
+        }
+
+        function copyAsJSON() {
+            const data = getSelectedData();
+            if (data.length === 0) return;
+
+            // Group by rows
+            const rows = new Map();
+            data.forEach(d => {
+                if (!rows.has(d.rowIndex)) {
+                    rows.set(d.rowIndex, {});
+                }
+                let value = d.value;
+                // Try to parse NULL and JSON values
+                if (value === 'NULL') {
+                    value = null;
+                } else if (value.startsWith('{') || value.startsWith('[')) {
+                    try {
+                        value = JSON.parse(value);
+                    } catch (e) {
+                        // Keep as string
+                    }
+                }
+                rows.get(d.rowIndex)[d.fieldName] = value;
+            });
+
+            const json = JSON.stringify(Array.from(rows.values()), null, 2);
+
+            navigator.clipboard.writeText(json).then(() => {
+                showCopyFeedback('Copied as JSON');
+            });
+        }
+
+        function showCopyFeedback(message) {
+            const selectionText = document.getElementById('selection-text');
+            const originalText = selectionText.textContent;
+            selectionText.textContent = `✓ ${message}`;
+            setTimeout(() => {
+                selectionText.textContent = originalText;
+            }, 2000);
+        }
+
+        function showContextMenu(x, y) {
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'block';
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+        }
+
+        function hideContextMenu() {
+            document.getElementById('context-menu').style.display = 'none';
+        }
+
+        // Global mouse up - stop selection
+        document.addEventListener('mouseup', () => {
+            isSelecting = false;
+        });
+
+        // Click outside - hide context menu
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu')) {
+                hideContextMenu();
+            }
+        });
+
+        // Context menu handlers
+        document.querySelectorAll('.context-menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const action = item.dataset.action;
+                hideContextMenu();
+
+                switch (action) {
+                    case 'copy':
+                        copyAsText();
+                        break;
+                    case 'copy-csv':
+                        copyAsCSV();
+                        break;
+                    case 'copy-json':
+                        copyAsJSON();
+                        break;
+                    case 'select-all':
+                        selectAll();
+                        break;
+                    case 'clear-selection':
+                        clearSelection();
+                        break;
+                }
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+C / Cmd+C - Copy
+            if ((e.ctrlKey || e.metaKey) && e.key === 'c' && selectedCells.size > 0) {
+                e.preventDefault();
+                copyAsText();
+            }
+
+            // Ctrl+A / Cmd+A - Select all
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                const table = document.querySelector('table');
+                if (table && document.activeElement.tagName !== 'INPUT') {
+                    e.preventDefault();
+                    selectAll();
+                }
+            }
+
+            // Escape - Clear selection
+            if (e.key === 'Escape') {
+                clearSelection();
+                hideContextMenu();
+            }
+        });
 
         // Button handlers
         document.getElementById('export-btn').addEventListener('click', () => {
