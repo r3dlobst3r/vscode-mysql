@@ -31,12 +31,16 @@ jobs:
         run: |
           npx vsce publish -p $VSCE_PAT
 
+      - name: Get version without v prefix
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
       - name: Upload VSIX as release asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./mysql-manager-${{ github.event.release.tag_name }}.vsix
-          asset_name: mysql-manager-${{ github.event.release.tag_name }}.vsix
+          asset_path: ./mysql-manager-${{ steps.version.outputs.VERSION }}.vsix
+          asset_name: mysql-manager-${{ steps.version.outputs.VERSION }}.vsix
           asset_content_type: application/zip
