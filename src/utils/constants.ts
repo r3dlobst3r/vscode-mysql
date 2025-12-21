@@ -17,6 +17,11 @@ export const COMMAND_DEPLOY_AZURE = 'mysql.deployAzure';
 export const COMMAND_SELECT_TOP_1000 = 'mysql.selectTop1000';
 export const COMMAND_VIEW_TABLE_STRUCTURE = 'mysql.viewTableStructure';
 export const COMMAND_SCRIPT_AS_CREATE = 'mysql.scriptAsCreate';
+export const COMMAND_CREATE_TABLE = 'mysql.createTable';
+export const COMMAND_CREATE_VIEW = 'mysql.createView';
+export const COMMAND_CREATE_PROCEDURE = 'mysql.createProcedure';
+export const COMMAND_CREATE_FUNCTION = 'mysql.createFunction';
+export const COMMAND_SET_ACTIVE_DATABASE = 'mysql.setActiveDatabase';
 
 // Configuration keys
 export const CONFIG_CONNECTIONS = 'mysql.connections';
@@ -85,6 +90,7 @@ export const AZURE_RESOURCE_TYPE = 'OssRdbms';
 // Webview IDs
 export const WEBVIEW_CONNECTION_DIALOG = 'mysqlConnectionDialog';
 export const WEBVIEW_DATABASE_DIALOG = 'mysqlDatabaseDialog';
+export const WEBVIEW_TABLE_DIALOG = 'mysqlTableDialog';
 export const WEBVIEW_RESULTS_PANEL = 'mysqlResultsPanel';
 export const WEBVIEW_FIREWALL_DIALOG = 'mysqlFirewallDialog';
 export const WEBVIEW_DEPLOYMENT_WIZARD = 'mysqlDeploymentWizard';

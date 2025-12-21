@@ -5,6 +5,10 @@ import { MySQLTreeDataProvider } from './treeView/mysqlTreeDataProvider';
 import { ConnectionNode, setMetadataProvider, TableNode, ViewNode, DatabaseNode } from './treeView/treeItems';
 import { ConnectionDialog } from './ui/webviews/connectionDialog';
 import { DatabaseDialog } from './ui/webviews/databaseDialog';
+import { TableDialog } from './ui/webviews/tableDialog';
+import { ViewDialog } from './ui/webviews/viewDialog';
+import { ProcedureDialog } from './ui/webviews/procedureDialog';
+import { FunctionDialog } from './ui/webviews/functionDialog';
 import { MetadataProvider } from './metadata/metadataProvider';
 import { QueryRunner } from './queries/queryRunner';
 import { ResultsPanel } from './ui/webviews/resultsPanel';
@@ -30,7 +34,12 @@ import {
     COMMAND_DEPLOY_AZURE,
     COMMAND_SELECT_TOP_1000,
     COMMAND_VIEW_TABLE_STRUCTURE,
-    COMMAND_SCRIPT_AS_CREATE
+    COMMAND_SCRIPT_AS_CREATE,
+    COMMAND_CREATE_TABLE,
+    COMMAND_CREATE_VIEW,
+    COMMAND_CREATE_PROCEDURE,
+    COMMAND_CREATE_FUNCTION,
+    COMMAND_SET_ACTIVE_DATABASE
 } from './utils/constants';
 
 let connectionManager: ConnectionManager;
@@ -38,6 +47,10 @@ let mysqlClient: MySQLClient;
 let treeDataProvider: MySQLTreeDataProvider;
 let connectionDialog: ConnectionDialog;
 let databaseDialog: DatabaseDialog;
+let tableDialog: TableDialog;
+let viewDialog: ViewDialog;
+let procedureDialog: ProcedureDialog;
+let functionDialog: FunctionDialog;
 let metadataProvider: MetadataProvider;
 let queryRunner: QueryRunner;
 let resultsPanel: ResultsPanel;
@@ -57,6 +70,10 @@ export function activate(context: vscode.ExtensionContext) {
     firewallManager = new FirewallManager();
     connectionDialog = new ConnectionDialog(context, connectionManager, mysqlClient, tokenManager);
     databaseDialog = new DatabaseDialog(context, mysqlClient);
+    tableDialog = new TableDialog(context, mysqlClient);
+    viewDialog = new ViewDialog(context, mysqlClient);
+    procedureDialog = new ProcedureDialog(context, mysqlClient);
+    functionDialog = new FunctionDialog(context, mysqlClient);
     metadataProvider = new MetadataProvider(mysqlClient);
     queryRunner = new QueryRunner(mysqlClient);
     resultsPanel = new ResultsPanel(context);
@@ -160,9 +177,33 @@ export function activate(context: vscode.ExtensionContext) {
             await handleScriptAsCreate(node);
         }),
 
+        vscode.commands.registerCommand(COMMAND_CREATE_TABLE, async (node?: DatabaseNode) => {
+            await handleCreateTable(node);
+        }),
+
+        vscode.commands.registerCommand(COMMAND_CREATE_VIEW, async (node?: DatabaseNode) => {
+            await handleCreateView(node);
+        }),
+
+        vscode.commands.registerCommand(COMMAND_CREATE_PROCEDURE, async (node?: DatabaseNode) => {
+            await handleCreateProcedure(node);
+        }),
+
+        vscode.commands.registerCommand(COMMAND_CREATE_FUNCTION, async (node?: DatabaseNode) => {
+            await handleCreateFunction(node);
+        }),
+
+        vscode.commands.registerCommand(COMMAND_SET_ACTIVE_DATABASE, async (node: DatabaseNode) => {
+            await handleSetActiveDatabase(node);
+        }),
+
         treeView,
         resultsPanel,
         databaseDialog,
+        tableDialog,
+        viewDialog,
+        procedureDialog,
+        functionDialog,
         logger
     );
 
@@ -398,10 +439,42 @@ async function handleNewQuery(node?: ConnectionNode) {
     // For now, users can select from connected servers when executing
 }
 
-async function handleCreateDatabase(node: ConnectionNode) {
+async function handleCreateDatabase(node?: ConnectionNode) {
     try {
+        // If no node provided, find a connected connection or prompt user to select one
+        let targetNode = node;
+        if (!targetNode) {
+            const connections = await connectionManager.getConnections();
+            const connectedConnections = connections.filter(c => treeDataProvider.isConnectionConnected(c.id));
+
+            if (connectedConnections.length === 0) {
+                vscode.window.showErrorMessage('No active connections. Please connect to a server first.');
+                return;
+            } else if (connectedConnections.length === 1) {
+                // Use the only connected connection
+                targetNode = await treeDataProvider.getConnectionNode(connectedConnections[0].id);
+            } else {
+                // Let user pick from multiple connections
+                const selected = await vscode.window.showQuickPick(
+                    connectedConnections.map(c => ({ label: c.name, connection: c })),
+                    { placeHolder: 'Select a connection to create the database on' }
+                );
+
+                if (!selected) {
+                    return;
+                }
+
+                targetNode = await treeDataProvider.getConnectionNode(selected.connection.id);
+            }
+
+            if (!targetNode) {
+                vscode.window.showErrorMessage('Failed to get connection information.');
+                return;
+            }
+        }
+
         // Ensure connection is connected
-        if (!treeDataProvider.isConnectionConnected(node.connection.id)) {
+        if (!treeDataProvider.isConnectionConnected(targetNode.connection.id)) {
             const connect = await vscode.window.showWarningMessage(
                 'Connection is not active. Would you like to connect first?',
                 'Connect',
@@ -409,16 +482,16 @@ async function handleCreateDatabase(node: ConnectionNode) {
             );
 
             if (connect === 'Connect') {
-                await handleConnect(node);
+                await handleConnect(targetNode);
             } else {
                 return;
             }
         }
 
         // Show database creation dialog
-        await databaseDialog.show(node.connection.id, () => {
+        await databaseDialog.show(targetNode.connection.id, () => {
             // Refresh tree view after database is created
-            treeDataProvider.refresh(node);
+            treeDataProvider.refresh(targetNode);
             vscode.window.showInformationMessage('Database created successfully!');
         });
     } catch (error) {
@@ -512,6 +585,317 @@ async function handleScriptAsCreate(node: TableNode | ViewNode) {
     } catch (error) {
         logger.error('Failed to script as CREATE', error as Error);
         vscode.window.showErrorMessage(`Failed to generate CREATE statement: ${(error as Error).message}`);
+    }
+}
+
+async function handleCreateTable(node?: DatabaseNode) {
+    try {
+        // If no node provided, find a connected connection and database
+        let connectionId: string;
+        let database: string;
+
+        if (!node) {
+            // Get connected connections
+            const connections = await connectionManager.getConnections();
+            const connectedConnections = connections.filter(c => treeDataProvider.isConnectionConnected(c.id));
+
+            if (connectedConnections.length === 0) {
+                vscode.window.showErrorMessage('No active connections. Please connect to a server first.');
+                return;
+            }
+
+            // Pick a connection
+            let selectedConnection;
+            if (connectedConnections.length === 1) {
+                selectedConnection = connectedConnections[0];
+            } else {
+                const selected = await vscode.window.showQuickPick(
+                    connectedConnections.map(c => ({ label: c.name, connection: c })),
+                    { placeHolder: 'Select a connection' }
+                );
+
+                if (!selected) {
+                    return;
+                }
+
+                selectedConnection = selected.connection;
+            }
+
+            connectionId = selectedConnection.id;
+
+            // Get databases for this connection
+            const databases = await metadataProvider.getDatabases(connectionId);
+
+            if (databases.length === 0) {
+                vscode.window.showErrorMessage('No databases found. Please create a database first.');
+                return;
+            }
+
+            // Pick a database
+            const selectedDb = await vscode.window.showQuickPick(
+                databases.map(db => ({ label: db.name, database: db.name })),
+                { placeHolder: 'Select a database to create the table in' }
+            );
+
+            if (!selectedDb) {
+                return;
+            }
+
+            database = selectedDb.database;
+        } else {
+            connectionId = node.connectionId;
+            database = node.database;
+        }
+
+        // Show table creation dialog
+        await tableDialog.show(connectionId, database, () => {
+            // Refresh tree view after table is created
+            if (node) {
+                treeDataProvider.refresh(node);
+            } else {
+                treeDataProvider.refresh();
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to show create table dialog', error as Error);
+        vscode.window.showErrorMessage(`Failed to show create table dialog: ${(error as Error).message}`);
+    }
+}
+
+async function handleCreateView(node?: DatabaseNode) {
+    try {
+        // If no node provided, find a connected connection and database
+        let connectionId: string;
+        let database: string;
+
+        if (!node) {
+            // Get connected connections
+            const connections = await connectionManager.getConnections();
+            const connectedConnections = connections.filter(c => treeDataProvider.isConnectionConnected(c.id));
+
+            if (connectedConnections.length === 0) {
+                vscode.window.showErrorMessage('No active connections. Please connect to a server first.');
+                return;
+            }
+
+            // Pick a connection
+            let selectedConnection;
+            if (connectedConnections.length === 1) {
+                selectedConnection = connectedConnections[0];
+            } else {
+                const selected = await vscode.window.showQuickPick(
+                    connectedConnections.map(c => ({ label: c.name, connection: c })),
+                    { placeHolder: 'Select a connection' }
+                );
+
+                if (!selected) {
+                    return;
+                }
+
+                selectedConnection = selected.connection;
+            }
+
+            connectionId = selectedConnection.id;
+
+            // Get databases for this connection
+            const databases = await metadataProvider.getDatabases(connectionId);
+
+            if (databases.length === 0) {
+                vscode.window.showErrorMessage('No databases found. Please create a database first.');
+                return;
+            }
+
+            // Pick a database
+            const selectedDb = await vscode.window.showQuickPick(
+                databases.map(db => ({ label: db.name, database: db.name })),
+                { placeHolder: 'Select a database to create the view in' }
+            );
+
+            if (!selectedDb) {
+                return;
+            }
+
+            database = selectedDb.database;
+        } else {
+            connectionId = node.connectionId;
+            database = node.database;
+        }
+
+        // Show view creation dialog
+        await viewDialog.show(connectionId, database, () => {
+            // Refresh tree view after view is created
+            if (node) {
+                treeDataProvider.refresh(node);
+            } else {
+                treeDataProvider.refresh();
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to show create view dialog', error as Error);
+        vscode.window.showErrorMessage(`Failed to show create view dialog: ${(error as Error).message}`);
+    }
+}
+
+async function handleCreateProcedure(node?: DatabaseNode) {
+    try {
+        // If no node provided, find a connected connection and database
+        let connectionId: string;
+        let database: string;
+
+        if (!node) {
+            // Get connected connections
+            const connections = await connectionManager.getConnections();
+            const connectedConnections = connections.filter(c => treeDataProvider.isConnectionConnected(c.id));
+
+            if (connectedConnections.length === 0) {
+                vscode.window.showErrorMessage('No active connections. Please connect to a server first.');
+                return;
+            }
+
+            // Pick a connection
+            let selectedConnection;
+            if (connectedConnections.length === 1) {
+                selectedConnection = connectedConnections[0];
+            } else {
+                const selected = await vscode.window.showQuickPick(
+                    connectedConnections.map(c => ({ label: c.name, connection: c })),
+                    { placeHolder: 'Select a connection' }
+                );
+
+                if (!selected) {
+                    return;
+                }
+
+                selectedConnection = selected.connection;
+            }
+
+            connectionId = selectedConnection.id;
+
+            // Get databases for this connection
+            const databases = await metadataProvider.getDatabases(connectionId);
+
+            if (databases.length === 0) {
+                vscode.window.showErrorMessage('No databases found. Please create a database first.');
+                return;
+            }
+
+            // Pick a database
+            const selectedDb = await vscode.window.showQuickPick(
+                databases.map(db => ({ label: db.name, database: db.name })),
+                { placeHolder: 'Select a database to create the procedure in' }
+            );
+
+            if (!selectedDb) {
+                return;
+            }
+
+            database = selectedDb.database;
+        } else {
+            connectionId = node.connectionId;
+            database = node.database;
+        }
+
+        // Show procedure creation dialog
+        await procedureDialog.show(connectionId, database, () => {
+            // Refresh tree view after procedure is created
+            if (node) {
+                treeDataProvider.refresh(node);
+            } else {
+                treeDataProvider.refresh();
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to show create procedure dialog', error as Error);
+        vscode.window.showErrorMessage(`Failed to show create procedure dialog: ${(error as Error).message}`);
+    }
+}
+
+async function handleCreateFunction(node?: DatabaseNode) {
+    try {
+        // If no node provided, find a connected connection and database
+        let connectionId: string;
+        let database: string;
+
+        if (!node) {
+            // Get connected connections
+            const connections = await connectionManager.getConnections();
+            const connectedConnections = connections.filter(c => treeDataProvider.isConnectionConnected(c.id));
+
+            if (connectedConnections.length === 0) {
+                vscode.window.showErrorMessage('No active connections. Please connect to a server first.');
+                return;
+            }
+
+            // Pick a connection
+            let selectedConnection;
+            if (connectedConnections.length === 1) {
+                selectedConnection = connectedConnections[0];
+            } else {
+                const selected = await vscode.window.showQuickPick(
+                    connectedConnections.map(c => ({ label: c.name, connection: c })),
+                    { placeHolder: 'Select a connection' }
+                );
+
+                if (!selected) {
+                    return;
+                }
+
+                selectedConnection = selected.connection;
+            }
+
+            connectionId = selectedConnection.id;
+
+            // Get databases for this connection
+            const databases = await metadataProvider.getDatabases(connectionId);
+
+            if (databases.length === 0) {
+                vscode.window.showErrorMessage('No databases found. Please create a database first.');
+                return;
+            }
+
+            // Pick a database
+            const selectedDb = await vscode.window.showQuickPick(
+                databases.map(db => ({ label: db.name, database: db.name })),
+                { placeHolder: 'Select a database to create the function in' }
+            );
+
+            if (!selectedDb) {
+                return;
+            }
+
+            database = selectedDb.database;
+        } else {
+            connectionId = node.connectionId;
+            database = node.database;
+        }
+
+        // Show function creation dialog
+        await functionDialog.show(connectionId, database, () => {
+            // Refresh tree view after function is created
+            if (node) {
+                treeDataProvider.refresh(node);
+            } else {
+                treeDataProvider.refresh();
+            }
+        });
+    } catch (error) {
+        logger.error('Failed to show create function dialog', error as Error);
+        vscode.window.showErrorMessage(`Failed to show create function dialog: ${(error as Error).message}`);
+    }
+}
+
+async function handleSetActiveDatabase(node: DatabaseNode) {
+    try {
+        // Store the active database for the connection
+        // This could be used by query execution to set the default database
+        const config = vscode.workspace.getConfiguration();
+        await config.update(`mysql.activeDatabase.${node.connectionId}`, node.database, vscode.ConfigurationTarget.Workspace);
+
+        vscode.window.showInformationMessage(`Active database set to: ${node.database}`);
+        logger.info(`Active database for connection ${node.connectionId} set to: ${node.database}`);
+    } catch (error) {
+        logger.error('Failed to set active database', error as Error);
+        vscode.window.showErrorMessage(`Failed to set active database: ${(error as Error).message}`);
     }
 }
 

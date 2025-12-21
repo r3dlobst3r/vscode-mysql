@@ -16,8 +16,14 @@ MySQL database management extension for Visual Studio Code with complete feature
 - **Advanced Settings**: Connection timeout, client flags, SQL mode
 - **Query Execution**: Execute SQL queries with Ctrl+Shift+E keyboard shortcut
 - **Results Display**: Rich webview table view with sorting and multiple result sets
+- **Cell Selection & Copy**: Select cells and copy as text, CSV, or JSON with Ctrl+C
 - **Export Functionality**: Export query results to CSV, JSON, Excel (.xlsx), or XML
 - **Create Database**: Create new databases with charset and collation selection
+- **Create Table**: Visual table creation dialog without writing SQL
+- **Create View**: Visual view creation dialog with SELECT statement editor
+- **Create Stored Procedure**: Visual procedure creation with parameter support
+- **Create Function**: Visual function creation with return type selection
+- **Set Active Database**: Select default database for queries
 - **Azure AD Authentication**: Azure MFA and User authentication with device code flow
 - **Azure Firewall Management**: Automatic firewall error detection and one-click IP whitelisting
 - **SQL IntelliSense**: Autocomplete for keywords, data types, functions, tables, and columns
@@ -71,11 +77,108 @@ The connection is now saved and will appear in the MySQL explorer!
 5. Right-click on database objects for actions:
    - **Tables**: Select Top 1000 Rows, View Table Structure, Script as CREATE
    - **Views**: Script as CREATE
-   - **Databases**: New Query, Create Database, Drop Database
+   - **Databases**: New Query, Create Table, Create View, Create Stored Procedure, Create Function, Set as Active Database, Create Database, Drop Database
    - **Connections**: Connect, Disconnect, Edit, Delete, New Query
 6. Additional actions:
    - Deploy to Azure (MySQL: Deploy to Azure command)
    - Refresh any level of the tree
+
+### Creating Databases and Tables Visually
+
+You can create databases and tables without writing SQL:
+
+#### Create a Database
+
+1. Right-click on a connected server or connection
+2. Select "MySQL: Create Database"
+3. Enter the database name
+4. Choose a character set (default: utf8mb4)
+5. Choose a collation (default: utf8mb4_general_ci)
+6. Click "Create Database"
+
+The new database will appear in the tree view automatically.
+
+#### Create a Table
+
+1. Right-click on a database
+2. Select "MySQL: Create Table" or click the `+` inline button
+3. Enter the table name
+4. Define columns using the visual editor:
+   - **Column Name**: Name of the column
+   - **Type**: Data type (INT, VARCHAR, TEXT, DATETIME, DECIMAL, BOOLEAN, BIGINT, DATE, TIMESTAMP, JSON)
+   - **Length**: Length for types like VARCHAR(255), INT(11), etc.
+   - **Nullable**: Whether the column can be NULL
+   - **Primary**: Mark as primary key
+   - **Auto Inc**: Enable auto-increment (typically for ID columns)
+5. Use "+ Add Column" to add more columns
+6. Click "Create Table"
+
+**Tip**: The first column defaults to `id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY`, which is a common pattern for database tables.
+
+#### Create a View
+
+1. Right-click on a database
+2. Select "MySQL: Create View"
+3. Enter the view name
+4. Enter the SELECT statement (without the CREATE VIEW part)
+5. Click "Create View"
+
+The view will appear in the database's view list automatically.
+
+#### Create a Stored Procedure
+
+1. Right-click on a database
+2. Select "MySQL: Create Stored Procedure"
+3. Enter the procedure name
+4. Optionally enter parameters (e.g., `IN user_id INT, OUT user_name VARCHAR(100)`)
+5. Enter the SQL body (without BEGIN/END)
+6. Click "Create Procedure"
+
+**Example parameters**: `IN param1 INT, OUT param2 VARCHAR(100)`
+
+#### Create a Function
+
+1. Right-click on a database
+2. Select "MySQL: Create Function"
+3. Enter the function name
+4. Optionally enter parameters (e.g., `user_id INT, multiplier DECIMAL(10,2)`)
+5. Select the return type from the dropdown
+6. Check "Deterministic" if the function always returns the same result for the same inputs
+7. Enter the SQL body (must include RETURN statement, without BEGIN/END)
+8. Click "Create Function"
+
+**Note**: Functions must include a RETURN statement in the body.
+
+#### Set Active Database
+
+To avoid "No database selected" errors when running queries:
+
+1. Right-click on any database
+2. Select "MySQL: Set as Active Database"
+3. This database will now be the default for queries on that connection
+
+### Working with Query Results
+
+After executing a query, you can interact with the results table:
+
+#### Selecting Cells
+
+- **Single cell**: Click on any cell to select it
+- **Multiple cells**: Click and drag to select a range of cells
+- **Extend selection**: Shift+Click to select from the last selected cell to the clicked cell
+- **Add to selection**: Ctrl/Cmd+Click to add individual cells to your selection
+- **Select all**: Ctrl/Cmd+A or right-click → "Select All"
+- **Clear selection**: Click elsewhere, press Escape, or right-click → "Clear Selection"
+
+#### Copying Data
+
+Once cells are selected, you can copy them in different formats:
+
+- **Plain Text** (Ctrl/Cmd+C): Tab-separated values, ready to paste into Excel or text editors
+- **CSV Format** (Right-click → "Copy as CSV"): Properly escaped CSV with headers, ideal for spreadsheets
+- **JSON Format** (Right-click → "Copy as JSON"): Structured JSON array, perfect for development work
+
+The selection counter at the bottom shows how many cells are selected, and displays a confirmation message when you copy.
 
 ## Configuration
 
@@ -126,6 +229,11 @@ The connection is now saved and will appear in the MySQL explorer!
 - `MySQL: Execute Query` (Ctrl+Shift+E) - Execute SQL query and display results
 - `MySQL: New Query` - Create a new SQL file
 - `MySQL: Create Database` - Create a new database with charset and collation selection
+- `MySQL: Create Table` - Create a new table using visual dialog
+- `MySQL: Create View` - Create a new view using visual dialog
+- `MySQL: Create Stored Procedure` - Create a new stored procedure using visual dialog
+- `MySQL: Create Function` - Create a new function using visual dialog
+- `MySQL: Set as Active Database` - Set default database for queries
 - `MySQL: Export Results` - Export query results to CSV, JSON, Excel, or XML
 - `MySQL: Deploy to Azure` - Deploy MySQL to Azure
 - `MySQL: Select Top 1000 Rows` - Generate SELECT query for table data

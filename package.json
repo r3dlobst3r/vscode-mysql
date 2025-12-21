@@ -2,7 +2,7 @@
   "name": "vscode-mysql",
   "displayName": "MySQL",
   "description": "MySQL database management for Visual Studio Code",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "publisher": "r3dlobst3r",
   "icon": "media/extension-icon.png",
   "repository": {
@@ -109,6 +109,30 @@
       {
         "command": "mysql.scriptAsCreate",
         "title": "MySQL: Script as CREATE"
+      },
+      {
+        "command": "mysql.createTable",
+        "title": "MySQL: Create Table",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mysql.createView",
+        "title": "MySQL: Create View",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mysql.createProcedure",
+        "title": "MySQL: Create Stored Procedure",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mysql.createFunction",
+        "title": "MySQL: Create Function",
+        "icon": "$(add)"
+      },
+      {
+        "command": "mysql.setActiveDatabase",
+        "title": "MySQL: Set as Active Database"
       }
     ],
     "keybindings": [
@@ -167,6 +191,31 @@
           "command": "mysql.createDatabase",
           "when": "view == mysqlConnections && viewItem =~ /^(connection-connected|server)$/",
           "group": "inline"
+        },
+        {
+          "command": "mysql.createTable",
+          "when": "view == mysqlConnections && viewItem == database",
+          "group": "inline"
+        },
+        {
+          "command": "mysql.createTable",
+          "when": "view == mysqlConnections && viewItem == database"
+        },
+        {
+          "command": "mysql.createView",
+          "when": "view == mysqlConnections && viewItem == database"
+        },
+        {
+          "command": "mysql.createProcedure",
+          "when": "view == mysqlConnections && viewItem == database"
+        },
+        {
+          "command": "mysql.createFunction",
+          "when": "view == mysqlConnections && viewItem == database"
+        },
+        {
+          "command": "mysql.setActiveDatabase",
+          "when": "view == mysqlConnections && viewItem == database"
         },
         {
           "command": "mysql.dropDatabase",
