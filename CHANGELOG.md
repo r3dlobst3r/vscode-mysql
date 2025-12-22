@@ -2,6 +2,13 @@
 
 All notable changes to the "MySQL for Visual Studio Code" extension will be documented in this file.
 
+## [1.1.7] - 2025-12-21
+
+### Fixed
+- Fixed "Cannot read properties of undefined (reading 'name')" error when using New Query command
+- Removed leftover development messages ("Phase 5", "Phase 6") from user-facing notifications
+- Improved Select Top 1000 command to execute query immediately instead of just creating SQL file
+
 ## [1.1.0] - 2025-12-21
 
 ### Added - Visual Database Object Creation

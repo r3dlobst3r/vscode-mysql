@@ -428,7 +428,12 @@ async function handleExecuteQuery() {
 
 async function handleNewQuery(node?: ConnectionNode) {
     // Create a new untitled SQL document
-    const connectionName = node ? node.connection.name : 'MySQL';
+    // Handle different node types (ConnectionNode, DatabaseNode, etc.)
+    let connectionName = 'MySQL';
+    if (node && 'connection' in node && node.connection) {
+        connectionName = node.connection.name;
+    }
+
     const doc = await vscode.workspace.openTextDocument({
         language: 'sql',
         content: `-- New Query for ${connectionName}\n-- Press Cmd+Shift+E (or click Execute button) to run the query\n\n`
@@ -505,7 +510,7 @@ async function handleDropDatabase(node: any) {
 }
 
 async function handleExportResults() {
-    vscode.window.showInformationMessage('Export results not yet implemented. Coming in Phase 6!');
+    vscode.window.showInformationMessage('Export results not yet implemented.');
 }
 
 async function handleDeployAzure() {
@@ -516,20 +521,23 @@ async function handleDeployAzure() {
 
 async function handleSelectTop1000(node: TableNode) {
     try {
-        // Generate SELECT query
+        // Generate and execute SELECT query
         const sql = `SELECT * FROM \`${node.database}\`.\`${node.table}\` LIMIT 1000;`;
 
-        // Create new document with the query
-        const doc = await vscode.workspace.openTextDocument({
-            language: 'sql',
-            content: sql
+        // Execute query with progress indicator
+        const results = await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: 'Executing query...',
+            cancellable: false
+        }, async () => {
+            return await queryRunner.executeMultipleQueries(node.connectionId, sql);
         });
 
-        await vscode.window.showTextDocument(doc);
-        vscode.window.showInformationMessage('Query ready. Execute it to see results (Query execution coming in Phase 5).');
+        // Show results
+        await resultsPanel.showResults(sql, results);
     } catch (error) {
-        logger.error('Failed to generate SELECT query', error as Error);
-        vscode.window.showErrorMessage(`Failed to generate query: ${(error as Error).message}`);
+        logger.error('Failed to execute SELECT query', error as Error);
+        vscode.window.showErrorMessage(`Failed to execute query: ${(error as Error).message}`);
     }
 }
 
