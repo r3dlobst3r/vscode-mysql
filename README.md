@@ -133,7 +133,7 @@ Creates `mysql-manager-{version}.vsix` in the project root.
 
 ## License
 
-MIT - See [LICENSE.txt](LICENSE.txt)
+GPL-3.0 - See [LICENSE](LICENSE)
 
 ## Privacy
 

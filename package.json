@@ -2,14 +2,14 @@
   "name": "mysql-manager",
   "displayName": "MySQL Manager",
   "description": "MySQL database management for Visual Studio Code",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "publisher": "r3dlobst3r",
   "icon": "media/extension-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/r3dlobst3r/vscode-mysql"
   },
-  "license": "MIT",
+  "license": "GPL-3.0",
   "engines": {
     "vscode": "^1.85.0",
     "node": ">=20.0.0"
