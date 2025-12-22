@@ -1,275 +1,167 @@
 # Change Log
 
-All notable changes to the "MySQL for Visual Studio Code" extension will be documented in this file.
+All notable changes to the MySQL Manager extension.
 
-## [1.1.7] - 2025-12-21
+## [1.2.0] - 2025-12-22
+
+### Changed
+- Changed license from MIT to GPL-3.0
+- Updated README to be more concise and user-friendly
+
+### Fixed
+- Fixed GitHub Actions publish workflow to properly upload VSIX files to releases
+- Publish workflow now creates VSIX package before publishing to marketplace
+
+## [1.1.9] - 2025-12-22
+
+### Changed
+- Simplified README documentation
+- Reduced verbosity in user-facing documentation
+
+## [1.1.8] - 2025-12-21
 
 ### Fixed
 - Fixed "Cannot read properties of undefined (reading 'name')" error when using New Query command
 - Removed leftover development messages ("Phase 5", "Phase 6") from user-facing notifications
 - Improved Select Top 1000 command to execute query immediately instead of just creating SQL file
 
+## [1.1.7] - 2025-12-21
+
+### Fixed
+- Improved asset upload in GitHub Actions publish workflow
+
+## [1.1.6] - 2025-12-21
+
+### Fixed
+- Updated asset paths in publish workflow
+
+## [1.1.5] - 2025-12-21
+
+### Changed
+- Updated display name to "MySQL Manager"
+
+## [1.1.4] - 2025-12-21
+
+### Changed
+- Renamed extension ID to avoid naming conflicts
+
+## [1.1.3] - 2025-12-21
+
+### Fixed
+- Updated GitHub Actions authentication token handling
+
+## [1.1.2] - 2025-12-21
+
+### Added
+- GitHub Actions workflow for automatic publishing to VS Code Marketplace on release
+
 ## [1.1.0] - 2025-12-21
 
 ### Added - Visual Database Object Creation
-- **Visual Table Creation Dialog**: Create tables without writing SQL
+- **Visual Table Creation Dialog**
   - Interactive grid-based column editor
   - Support for all major MySQL data types (INT, VARCHAR, TEXT, DATETIME, DECIMAL, BOOLEAN, BIGINT, DATE, TIMESTAMP, JSON)
   - Column configuration: name, type, length, nullable, primary key, auto-increment
   - Default first column: `id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY`
-  - Table name validation (alphanumeric and underscores)
-  - Automatic CREATE TABLE statement generation and execution
-  - Context menu integration: right-click database → Create Table
-  - Inline button on database nodes for quick access
+  - Table name validation
+  - Context menu integration
 
-- **Enhanced Database Creation**: Fixed command to work from anywhere
-  - Can now be called from command palette, toolbar, or context menu
-  - Automatically selects connection if only one is connected
-  - Prompts for connection selection if multiple are connected
-  - Improved error handling and user feedback
-
-- **Visual View Creation Dialog**: Create views without writing SQL
+- **Visual View Creation Dialog**
   - Define view name and SELECT statement
-  - Input validation ensures proper syntax
+  - Input validation
   - Automatic CREATE VIEW statement generation
-  - Context menu integration: right-click database → Create View
 
-- **Visual Stored Procedure Creation Dialog**: Create stored procedures with visual editor
+- **Visual Stored Procedure Creation Dialog**
   - Define procedure name and parameters
-  - IN/OUT parameter support with examples
-  - SQL body editor with syntax hints
+  - IN/OUT parameter support
   - Automatic DELIMITER handling
-  - Context menu integration: right-click database → Create Stored Procedure
 
-- **Visual Function Creation Dialog**: Create functions with visual editor
+- **Visual Function Creation Dialog**
   - Define function name, parameters, and return type
   - DETERMINISTIC/NOT DETERMINISTIC toggle
-  - SQL body editor with RETURN statement validation
-  - Support for all MySQL data types as return values
-  - Context menu integration: right-click database → Create Function
-
-- **Set Active Database**: Select default database for queries
-  - Right-click any database → Set as Active Database
-  - Stores database preference per connection in workspace settings
-  - Helps avoid "No database selected" errors when creating tables
+  - RETURN statement validation
 
 ### Added - Cell Selection & Copy in Results
-- **Interactive Cell Selection**: Click and drag to select cells in query results
-  - Single cell selection: Click on a cell
-  - Range selection: Click and drag across multiple cells
-  - Extended selection: Shift+Click to select range
-  - Multiple selection: Ctrl/Cmd+Click to add individual cells
-  - Select all: Ctrl/Cmd+A or right-click → Select All
-- **Copy in Multiple Formats**:
-  - Copy as plain text (Ctrl/Cmd+C or right-click → Copy)
-  - Copy as CSV with proper escaping (right-click → Copy as CSV)
-  - Copy as JSON with structured data (right-click → Copy as JSON)
-- **Visual Selection Feedback**:
-  - Selected cells highlighted with VS Code theme colors
-  - Selection counter at bottom showing number of cells selected
-  - Copy confirmation messages
-- **Context Menu**: Right-click on cells for copy options and selection controls
-- **Keyboard Shortcuts**:
-  - Ctrl/Cmd+C: Copy selected cells as text
-  - Ctrl/Cmd+A: Select all cells
-  - Escape: Clear selection and close context menu
+- **Interactive Cell Selection**
+  - Single cell, range, and multi-cell selection
+  - Keyboard shortcuts (Ctrl/Cmd+C, Ctrl/Cmd+A)
 
-### Improved - User Experience
-- Better error messages for database and table operations
-- Automatic tree view refresh after creating databases, tables, views, procedures, and functions
-- Support for creating database objects from command palette or database context menus
-- Visual indicators and inline buttons for common operations
-- Cell selection replaces text selection for better data manipulation
+- **Copy in Multiple Formats**
+  - Copy as plain text (tab-separated)
+  - Copy as CSV with proper escaping
+  - Copy as JSON with structured data
 
 ### Fixed
 - Right-click context menu now preserves cell selection in query results
-- Fixed issue where right-clicking would clear selected cells
 
-## [1.0.0] - 2025-12-18
+## [1.0.0] - 2025-12-20
 
-### Added - Phase 2 (Azure AD Authentication)
-- Full Azure Active Directory (Azure AD) authentication support for Azure MySQL Flexible Server
-- Microsoft Authentication Library (MSAL) integration using device code flow
-- Authentication type selection in connection dialog:
-  - **SQL Login**: Traditional username/password authentication
-  - **Azure MFA and User**: Azure AD authentication with Multi-Factor Authentication support
-- Device code authentication flow with browser-based sign-in
-- Automatic token management with secure storage in VS Code SecretStorage
-- Automatic token refresh when expired (silent renewal)
-- Token expiration handling (refreshes 5 minutes before expiry)
-- Azure AD username and tenant tracking
-- Support for testing Azure AD connections before saving
-- Connection flow enhancements:
-  - Automatic Azure AD authentication prompt when connecting
-  - Token validation and refresh on connection
-  - Proper error handling for authentication failures
-- SSL enforcement for Azure AD connections (required by Azure MySQL)
+### Added - Core Features
+- **Connection Management**
+  - Save and manage MySQL connections with secure password storage
+  - Rich webview-based connection dialog
+  - Connection testing before saving
+  - SSL support (disable, require, verify_ca, verify_identity)
+  - Advanced settings (timeout, client flags, SQL mode)
 
-### Added - Phase 11 (Enhanced Settings & Configuration)
-- Additional configuration options for customization:
-  - Auto-connect on startup to default connection
-  - Show/hide system databases (information_schema, performance_schema, sys, mysql)
-  - Enable/disable IntelliSense features
-  - Control table and column suggestions in IntelliSense
-  - Configure connection pool size (1-100 connections)
-  - Results display settings (rows per page, max column width)
-- Auto-connect feature activates default connection on extension startup
-- System databases filter respects user preference
-- IntelliSense can be toggled on/off globally or per feature
+- **Database Explorer**
+  - TreeView showing connections, databases, tables, views, procedures, and functions
+  - Lazy loading for better performance
+  - Context menu actions for all object types
+  - Refresh functionality at any level
 
-### Added - Phase 8 (Azure Firewall Rule Management)
-- Automatic Azure MySQL Flexible Server detection from connection hostname
-- Azure resource information extraction (subscription, resource group, server name)
-- Firewall rule management using Azure SDK:
-  - List existing firewall rules
-  - Create firewall rules for current IP address
-  - Create custom firewall rules with IP range
-  - Delete firewall rules
-- Automatic firewall error detection and handling:
-  - Detects connection failures due to firewall blocks
-  - Prompts user to add current IP to firewall rules
-  - Auto-creates firewall rule with single click
-  - Offers connection retry after rule creation
-- Current IP address detection via external API
-- Integration with Azure DefaultAzureCredential for authentication
-
-### Added - Phase 10 (SQL Language Features)
-- IntelliSense autocomplete for SQL code:
-  - 60+ MySQL keywords (SELECT, FROM, WHERE, INSERT, CREATE, etc.)
-  - 30+ data types (INT, VARCHAR, DATETIME, JSON, etc.)
-  - 50+ built-in functions (CONCAT, NOW, COUNT, AVG, etc.)
-  - Dynamic table and column suggestions from active connection
-  - Snippet support for functions with parameter placeholders
-- Hover provider for metadata display:
-  - Table information (engine, row count, column count, comments)
-  - Column information (type, nullable, key, default value, extra attributes)
-  - Query MySQL system tables for real-time information
-- SQL code formatting using sql-formatter:
-  - Document and range formatting support
-  - Configurable keyword case (upper, lower, capitalize)
-  - Configurable identifier case (upper, lower, capitalize, preserve)
-  - Optional comment stripping
-  - Reindent support
-  - MySQL-specific syntax support
-- Language features automatically enabled for .sql files
-- Connection-aware IntelliSense (updates when connecting to servers)
-
-### Added - Phase 7 (Create Database Dialog)
-- Rich webview-based database creation dialog
-- Real-time character set selection with descriptions
-- Collation dropdown that dynamically updates based on selected charset
-- Automatic loading of available charsets and collations from MySQL server
-- Support for default charset (utf8mb4) and collation
-- Database name validation (alphanumeric and underscores only)
-- Form validation with user-friendly error messages
-- Success notification with auto-close dialog
-- Connection state check before showing dialog (prompts to connect if needed)
-- Automatic tree view refresh after database creation
-- Context menu integration on server nodes
-
-### Added - Phase 6 (Export Functionality)
-- Complete export functionality with 4 formats:
-  - **CSV**: Comma-separated values with proper escaping
-  - **JSON**: Structured JSON with metadata and field type information
-  - **Excel (.xlsx)**: Rich Excel files with styled headers, auto-sized columns, frozen headers, and autofilter
-  - **XML**: Well-formed XML with field type metadata
-- Format selection via quick-pick dialog with icons and descriptions
-- File save dialog with format-specific file filters
-- Export current result set from results panel
-- Progress indicators for large exports
-- Success notifications with "Open File" and "Show in Folder" actions
-- Proper handling of NULL values, dates, binary data, and complex objects
-- Error handling with user-friendly messages
-- Export manager coordinates all exporters
-
-### Added - Phase 5 (Query Execution & Results Display)
-- Full query execution functionality with keyboard shortcut (Ctrl+Shift+E / Cmd+Shift+E)
-- Smart SQL extraction from editor (selection, current statement, or entire file)
-- Multi-statement query execution with automatic parsing
-- Rich webview-based results panel with tabbed interface for multiple result sets
-- Real-time statistics (rows returned/affected, execution time)
-- Query result table with:
-  - Column headers with type information on hover
+- **Query Execution**
+  - Execute SQL queries with Ctrl+Shift+E keyboard shortcut
+  - Smart SQL extraction (selection, current statement, or entire file)
+  - Multi-statement query execution
+  - Rich results panel with tabbed interface
+  - Sortable columns with sticky headers
   - NULL value highlighting
-  - Sortable columns (sticky header)
-  - Horizontal and vertical scrolling for large datasets
-- Error display with detailed error messages
-- Success messages for non-SELECT queries (INSERT, UPDATE, DELETE)
-- Connection auto-selection (single connection) or quick-pick (multiple connections)
-- Query refresh functionality to re-run the last query
-- Export button placeholder (functionality coming in Phase 6)
-- Progress indicators during query execution
-- Query history tracking
+  - Query history tracking
 
-### Added - Phase 4 (Database Object Explorer)
-- Full database object hierarchy browsing
-- Expand connected servers to see all databases
-- Browse tables, views, stored procedures, and functions within each database
-- Context menu actions for database objects:
-  - **Select Top 1000 Rows**: Generate SELECT query for table data preview
-  - **View Table Structure**: Display column information (name, type, nullable, key)
-  - **Script as CREATE**: Generate CREATE TABLE/VIEW statement
-- Metadata provider for querying MySQL system tables
-- Automatic filtering of system databases (information_schema, performance_schema, sys)
-- Icons for different object types (database, table, view, procedure, function)
-- Lazy loading of tree nodes for better performance
-- Error handling with user-friendly messages
+- **Export Functionality**
+  - Export to CSV with proper escaping
+  - Export to JSON with metadata
+  - Export to Excel (.xlsx) with styled headers
+  - Export to XML with field type metadata
+  - Progress indicators for large exports
 
-### Added - Phase 3 (Connection Dialog)
-- Rich webview-based connection dialog for creating and editing connections
-- Multi-tab interface with Basic, Advanced, and SSL configuration
-- Connection testing before saving
-- SSL certificate file browsing
-- Support for all connection parameters (host, port, username, password, database, SSL, timeouts, etc.)
-- Edit existing connections with pre-populated fields
-- Real-time form validation
-- Success/error status messages
-- Secure password storage integration
+- **Database Management**
+  - Create databases with charset and collation selection
+  - View table structure
+  - Select top 1000 rows
+  - Script as CREATE for tables and views
 
-### Added - Phase 1 (Foundation)
-- Initial release with basic functionality
-- Connection manager with secure password storage via VS Code SecretStorage
-- MySQL client wrapper using mysql2 for database connections
-- TreeView explorer showing saved MySQL connections
-- Support for MySQL 5.7, 8.0, and MariaDB
-- SSL/TLS connection support (disable, require, verify_ca, verify_identity)
-- MySQL syntax highlighting for .sql files
-- MySQL code snippets
-- Azure MySQL Flexible Server deployment link
-- Basic commands:
-  - Connect to saved connection
-  - Disconnect from server
-  - Delete connection
-  - Refresh connections
-  - New query file creation
-  - Deploy to Azure
+- **Azure Support**
+  - Azure AD authentication (MFA and User)
+  - Device code flow authentication
+  - Automatic token management and refresh
+  - Azure firewall rule management
+  - Automatic firewall error detection
+  - One-click IP whitelisting
+  - Azure MySQL Flexible Server deployment link
 
-### Configuration
-- Connection settings stored in VS Code configuration
-- Passwords stored securely in VS Code SecretStorage
-- Configurable query timeout and max results
-- SQL formatting options
-- Debug logging option
+- **SQL Language Features**
+  - IntelliSense autocomplete for keywords, data types, functions, tables, and columns
+  - Hover information for tables and columns
+  - SQL code formatting with configurable options
+  - MySQL-specific syntax highlighting
+  - Code snippets for common operations
 
-### Technical Requirements
-- Node.js 20.0.0 or higher (required for Azure AD authentication dependencies)
-- VS Code 1.85.0 or higher
+- **Enhanced Settings**
+  - Auto-connect on startup
+  - Show/hide system databases
+  - Configurable IntelliSense
+  - Connection pool size configuration
+  - Results display settings (rows per page, max column width)
+  - SQL formatting options (keyword case, identifier case)
 
-### Known Limitations
-- Table data editing not yet available
-- Query history UI not yet available (tracked internally)
-- Database drop functionality not yet available
+### Added - CI/CD
+- GitHub Actions workflows for build, test, and release
+- Automated release creation on merge to main
 
-### Development Status
-- Phase 1: ✅ COMPLETED - Project foundation, connection management, tree view
-- Phase 2: ✅ COMPLETED - Azure AD authentication (MFA and User)
-- Phase 3: ✅ COMPLETED - Connection dialog webview
-- Phase 4: ✅ COMPLETED - Full database object explorer
-- Phase 5: ✅ COMPLETED - Query execution with rich results display
-- Phase 6: ✅ COMPLETED - Export to CSV, JSON, Excel, XML
-- Phase 7: ✅ COMPLETED - Create database dialog with charset/collation
-- Phase 8: ✅ COMPLETED - Azure firewall rule management
-- Phase 9: ✅ COMPLETED - Azure deployment (portal link integration)
-- Phase 10: ✅ COMPLETED - SQL IntelliSense and formatting
-- Phase 11: ✅ COMPLETED - Enhanced settings and configuration
-- Phase 12: ✅ IN PROGRESS - Final documentation and packaging
+### Technical
+- VS Code 1.85.0+ support
+- Node.js 20.0.0+ support
+- MySQL 5.7, 8.0, and MariaDB compatibility
+- Secure password storage using VS Code SecretStorage
