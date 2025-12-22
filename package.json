@@ -2,7 +2,7 @@
   "name": "mysql-manager",
   "displayName": "MySQL Manager",
   "description": "MySQL database management for Visual Studio Code",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "publisher": "r3dlobst3r",
   "icon": "media/extension-icon.png",
   "repository": {
